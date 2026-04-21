@@ -49,6 +49,8 @@ class DeepSeekService:
                 stream=False,
             )
 
+            if not response.choices:
+                raise ValueError("No choices returned by DeepSeek API")
             return response.choices[0].message.content
 
         except Exception as e:

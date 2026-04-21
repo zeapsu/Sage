@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "arXiv Sage",
+  "productName": "Sage",
   "version": "0.1.0",
-  "identifier": "com.arxivsage.desktop",
+  "identifier": "com.sage.desktop",
   "build": {
     "frontendDist": "../out",
     "devUrl": "http://localhost:3000",
@@ -12,11 +12,19 @@
   "app": {
     "windows": [
       {
-        "title": "arXiv Sage",
-        "width": 1200,
-        "height": 1000,
+        "label": "main",
+        "title": "Sage",
+        "width": 960,
+        "height": 640,
+        "minWidth": 720,
+        "minHeight": 480,
         "resizable": true,
-        "fullscreen": false
+        "fullscreen": false,
+        "decorations": false,
+        "transparent": true,
+        "alwaysOnTop": true,
+        "skipTaskbar": true,
+        "center": true
       }
     ],
     "security": {
@@ -34,6 +42,7 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
+    "identifier": "com.sage.desktop",
     "externalBin": ["binaries/main"]
   },
   "plugins": {

@@ -14,9 +14,13 @@
   "dependencies": {
     "@tauri-apps/api": "^1.6.0",
     "@tauri-apps/plugin-shell": "^2.2.0",
+    "clsx": "^2.1.1",
+    "framer-motion": "^11.0.0",
     "next": "^15.2.4",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "tailwind-merge": "^2.5.0",
+    "zustand": "^5.0.0"
   },
   "devDependencies": {
     "@eslint/compat": "^1.2.7",
@@ -38,8 +42,8 @@
     "typescript": "^5"
   },
   "build": {
-    "appId": "com.arxivsage.app",
-    "productName": "arXiv Sage",
+    "appId": "com.sage.app",
+    "productName": "Sage",
     "files": [
       "electron/**/*",
       "out/**/*"

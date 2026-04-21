@@ -1,26 +1,62 @@
+/** @type {import('tailwindcss').Config} */
 module.exports = {
+  darkMode: "class",
+  content: ["./src/**/*.{ts,tsx}"],
   theme: {
     extend: {
-      keyframes: {
-        slidein: {
-          from: {
-            opacity: "0",
-            transform: "translateY(-10px)",
-          },
-          to: {
-            opacity: "1",
-            transform: "translateY(0)",
-          },
-        },
+      colors: {
+        "surface-container-lowest": "#0e0e0e",
+        "surface-container-low": "#1c1b1b",
+        surface: "#131313",
+        "surface-container": "#201f1f",
+        "surface-container-high": "#2a2a2a",
+        "surface-container-highest": "#353534",
+        "surface-bright": "#3a3939",
+        "surface-dim": "#131313",
+        "surface-tint": "#adc6ff",
+        primary: "#adc6ff",
+        "primary-container": "#4d8eff",
+        "on-primary": "#002e6a",
+        "on-primary-container": "#00285d",
+        "primary-fixed": "#d8e2ff",
+        "primary-fixed-dim": "#adc6ff",
+        "on-surface": "#e5e2e1",
+        "on-surface-variant": "#c2c6d6",
+        outline: "#8c909f",
+        "outline-variant": "#424754",
+        error: "#ffb4ab",
+        "error-container": "#93000a",
+        "on-error": "#690005",
+        "on-error-container": "#ffdad6",
+        tertiary: "#ffb786",
+        "tertiary-container": "#df7412",
+        "on-tertiary": "#502400",
+        "on-tertiary-container": "#461f00",
+        secondary: "#c8c6c5",
+        "secondary-container": "#474746",
+        "on-secondary": "#303030",
+        "on-secondary-container": "#b7b5b4",
       },
-      animation: {
-        slidein: "slidein 1s ease 300ms",
+      borderRadius: {
+        DEFAULT: "1rem",
+        sm: "0.5rem",
+        md: "1rem",
+        lg: "2rem",
+        xl: "3rem",
+        full: "9999px",
+      },
+      fontFamily: {
+        headline: ["Inter", "system-ui", "sans-serif"],
+        body: ["Inter", "system-ui", "sans-serif"],
+        label: ["Inter", "system-ui", "sans-serif"],
+      },
+      fontSize: {
+        "headline-sm": ["1.5rem", { lineHeight: "1.3", letterSpacing: "-0.02em" }],
+        "title-md": ["1.125rem", { lineHeight: "1.4" }],
+        "body-md": ["0.875rem", { lineHeight: "1.5" }],
+        "label-sm": ["0.6875rem", { lineHeight: "1.4", letterSpacing: "0.05em" }],
       },
     },
   },
-  // ...other config
-  plugins: [
-    require("@tailwindcss/typography"),
-    // ...other plugins
-  ],
+  plugins: [],
 };

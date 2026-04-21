@@ -1,5 +1,6 @@
 import { useState } from "react";
 import axios from "axios";
+import { ensureDesktopBackend, getApiBaseUrl } from "@/lib/sage-api";
 
 interface SearchProps {
   onResultsReceived: (results: any) => void;
@@ -13,13 +14,14 @@ export default function KeywordSearch({
   setIsLoading,
 }: SearchProps) {
   const [keyword, setKeyword] = useState<string>("");
-  const endpoint = "http://localhost:8000/api/keyword/summarize"; // Update accordingly with FastAPI endpoint
+  const endpoint = `${getApiBaseUrl()}/api/keyword/summarize`;
 
   const handleSearch = async () => {
     if (!keyword.trim()) return;
 
     try {
       setIsLoading(true);
+      await ensureDesktopBackend();
 
       // Call the endpoint created in the FastAPI backend
       const response = await axios.post(endpoint, {

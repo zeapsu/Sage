@@ -15,6 +15,13 @@ from services.arxiv import ArxivService
 from services.pdf import PDFService
 from services.summarizer import DeepSeekService
 
+from api import chat, knowledge, skills as skills_api
+from config import SageConfig
+from skills.read_document import ReadDocumentSkill
+from skills.registry import SkillRegistry
+from skills.search_docs import SearchDocsSkill
+from store.db import KnowledgeStore
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
@@ -25,14 +32,31 @@ load_dotenv()
 
 app = FastAPI(title="arXiv Sage API")
 
+# --- Sage knowledge agent setup ---
+_sage_config = SageConfig()
+_sage_config.ensure_default_config()
+_knowledge_store = KnowledgeStore(_sage_config.db_path)
+_skill_registry = SkillRegistry()
+_skill_registry.register(SearchDocsSkill())
+_skill_registry.register(ReadDocumentSkill())
+
+app.dependency_overrides[KnowledgeStore] = lambda: _knowledge_store
+app.dependency_overrides[SkillRegistry] = lambda: _skill_registry
+app.dependency_overrides[SageConfig] = lambda: _sage_config
+
+app.include_router(knowledge.router)
+app.include_router(chat.router)
+app.include_router(skills_api.router)
+# --- end Sage setup ---
+
 # Add CORS middleware with configurable origins
 origins = os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization"],
 )
 
 # Initialize services
@@ -172,7 +196,7 @@ def search_papers(request: SearchRequest):
         return {"papers": results}
     except Exception as e:
         logger.error(f"Error searching arXiv: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error searching arXiv: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error searching arXiv")
 
 
 @app.post("/api/paper/summarize")
@@ -203,7 +227,7 @@ def summarize_paper(
         }
     except Exception as e:
         logger.error(f"Error processing paper: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error processing paper: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error processing paper")
 
 
 @app.post("/api/keyword/summarize")
@@ -239,9 +263,7 @@ async def summarize_by_keyword(
         return {"posts": summarized_posts}
     except Exception as e:
         logger.error(f"Error processing keyword search: {str(e)}")
-        raise HTTPException(
-            status_code=500, detail=f"Error processing keyword search: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail="Error processing keyword search")
 
 
 @app.get("/api/paper/{paper_id}")
@@ -252,7 +274,7 @@ def get_paper(paper_id: str):
         return paper
     except Exception as e:
         logger.error(f"Paper not found: {str(e)}")
-        raise HTTPException(status_code=404, detail=f"Paper not found: {str(e)}")
+        raise HTTPException(status_code=404, detail="Paper not found")
 
 
 @app.get("/api/paper/{paper_id}/extract")
@@ -268,7 +290,7 @@ def download_and_extract(paper_id: str):
         return {"paper_id": paper_id, "text": extracted_text, "pdf_path": pdf_path}
     except Exception as e:
         logger.error(f"Error processing paper: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error processing paper: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error processing paper")
 
 
 @app.get("/")
@@ -297,4 +319,4 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    uvicorn.run("main:app", host="0.0.0.0", port=args.port, reload=True)
+    uvicorn.run(app, host="0.0.0.0", port=args.port, reload=True)

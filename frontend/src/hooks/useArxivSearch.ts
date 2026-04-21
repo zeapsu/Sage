@@ -1,7 +1,6 @@
 import { useState } from "react";
 import axios from "axios";
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+import { ensureDesktopBackend, getApiBaseUrl } from "@/lib/sage-api";
 
 export function useArxivSearch() {
   const [results, setResults] = useState([]);
@@ -19,8 +18,10 @@ export function useArxivSearch() {
     setError(null);
 
     try {
+      await ensureDesktopBackend();
+
       const response = await axios.post(
-        `${API_BASE_URL}/api/keyword/summarize`,
+        `${getApiBaseUrl()}/api/keyword/summarize`,
         {
           keyword,
           max_results: maxResults,
