@@ -1,6 +1,8 @@
-# arXiv Sage: AI-Powered Research Summarizer
+# Sage: Local Knowledge Agent
 
-arXiv Sage is a desktop application that transforms complex research papers into engaging, Instagram-style summaries. Simply enter a keyword, and the app fetches the latest papers from arXiv, summarizes them using DeepSeek AI, and presents them in a beautiful feed interface.
+> *Formerly "arXiv Sage" — evolving from a RAG summarizer into a local-first knowledge agent.*
+
+A local-first desktop app where you bring your own documents, connect any AI agent, and generate structured learning outputs — quizzes, flashcards, audio reviews, and reports — powered by a skill/tool system.
 
 ## Features
 

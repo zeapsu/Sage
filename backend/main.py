@@ -26,11 +26,11 @@ from store.db import KnowledgeStore
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
-logger = logging.getLogger("arxiv_sage")
+logger = logging.getLogger("sage")
 
 load_dotenv()
 
-app = FastAPI(title="arXiv Sage API")
+app = FastAPI(title="Sage API")
 
 # --- Sage knowledge agent setup ---
 _sage_config = SageConfig()
@@ -196,7 +196,7 @@ def search_papers(request: SearchRequest):
         return {"papers": results}
     except Exception as e:
         logger.error(f"Error searching arXiv: {str(e)}")
-        raise HTTPException(status_code=500, detail="Error searching arXiv")
+        raise HTTPException(status_code=500, detail=f"Error searching arXiv: {str(e)}")
 
 
 @app.post("/api/paper/summarize")
@@ -227,7 +227,7 @@ def summarize_paper(
         }
     except Exception as e:
         logger.error(f"Error processing paper: {str(e)}")
-        raise HTTPException(status_code=500, detail="Error processing paper")
+        raise HTTPException(status_code=500, detail=f"Error processing paper: {str(e)}")
 
 
 @app.post("/api/keyword/summarize")
@@ -263,7 +263,7 @@ async def summarize_by_keyword(
         return {"posts": summarized_posts}
     except Exception as e:
         logger.error(f"Error processing keyword search: {str(e)}")
-        raise HTTPException(status_code=500, detail="Error processing keyword search")
+        raise HTTPException(status_code=500, detail=f"Error processing keyword search: {str(e)}")
 
 
 @app.get("/api/paper/{paper_id}")
@@ -274,7 +274,7 @@ def get_paper(paper_id: str):
         return paper
     except Exception as e:
         logger.error(f"Paper not found: {str(e)}")
-        raise HTTPException(status_code=404, detail="Paper not found")
+        raise HTTPException(status_code=404, detail=f"Paper not found: {str(e)}")
 
 
 @app.get("/api/paper/{paper_id}/extract")
@@ -290,12 +290,12 @@ def download_and_extract(paper_id: str):
         return {"paper_id": paper_id, "text": extracted_text, "pdf_path": pdf_path}
     except Exception as e:
         logger.error(f"Error processing paper: {str(e)}")
-        raise HTTPException(status_code=500, detail="Error processing paper")
+        raise HTTPException(status_code=500, detail=f"Error processing paper: {str(e)}")
 
 
 @app.get("/")
 def read_root():
-    return {"message": "Welcome to the arXiv Sage API!"}
+    return {"message": "Welcome to the Sage API!"}
 
 
 # Clear caches endpoint (for maintenance)
