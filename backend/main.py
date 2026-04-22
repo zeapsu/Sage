@@ -15,7 +15,7 @@ from services.arxiv import ArxivService
 from services.pdf import PDFService
 from services.summarizer import DeepSeekService
 
-from api import chat, knowledge, skills as skills_api
+from api import chat, knowledge, skills as skills_api, tomes as tomes_api
 from config import SageConfig
 from skills.read_document import ReadDocumentSkill
 from skills.registry import SkillRegistry
@@ -46,6 +46,7 @@ app.dependency_overrides[SageConfig] = lambda: _sage_config
 
 app.include_router(knowledge.router)
 app.include_router(chat.router)
+app.include_router(tomes_api.router)
 app.include_router(skills_api.router)
 # --- end Sage setup ---
 
