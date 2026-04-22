@@ -21,6 +21,7 @@ class SkillContext:
     provider: AgentProvider
     workspace: Path
     config: Any
+    tome_id: Optional[str] = None  # Active tome for scoped operations
 
 
 class Skill(ABC):
