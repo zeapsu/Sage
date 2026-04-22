@@ -1,4 +1,4 @@
-"""Chat API endpoints."""
+"""Chat API endpoints — tome-scoped conversations."""
 from __future__ import annotations
 import json
 from fastapi import APIRouter, Depends
@@ -30,6 +30,7 @@ Always ground your answers in the user's actual documents."""
 class ChatRequest(BaseModel):
     message: str
     session_id: str | None = None
+    tome_id: str | None = None  # Scope to this tome
     provider: str | None = None
     model: str | None = None
 
@@ -59,7 +60,9 @@ async def chat(
         ]
         session_id = req.session_id
     else:
-        session = store.create_session(provider=provider_name, model=model)
+        session = store.create_session(
+            provider=provider_name, model=model, tome_id=req.tome_id,
+        )
         session_id = session.id
         conversation = []
 
@@ -67,9 +70,12 @@ async def chat(
     full_conversation.append(Message(role="user", content=req.message))
     store.add_message(DBMessage(session_id=session_id, role="user", content=req.message))
 
-    ctx = SkillContext(store=store, provider=provider, workspace=config.db_path.parent, config=config)
+    ctx = SkillContext(
+        store=store, provider=provider, workspace=config.db_path.parent,
+        config=config, tome_id=req.tome_id,
+    )
     orchestrator = AgentOrchestrator(
-        provider=provider, model=model, store=store, skills=skills, skill_context=ctx
+        provider=provider, model=model, store=store, skills=skills, skill_context=ctx,
     )
 
     response_text = await orchestrator.run(full_conversation)
@@ -90,14 +96,19 @@ async def chat_stream(
     model = req.model or provider_config.get("default_model", "llama3.1:8b")
 
     provider = create_provider(provider_name, provider_config)
-    session = store.create_session(provider=provider_name, model=model)
+    session = store.create_session(
+        provider=provider_name, model=model, tome_id=req.tome_id,
+    )
 
     conversation = [Message(role="system", content=SYSTEM_PROMPT), Message(role="user", content=req.message)]
     store.add_message(DBMessage(session_id=session.id, role="user", content=req.message))
 
-    ctx = SkillContext(store=store, provider=provider, workspace=config.db_path.parent, config=config)
+    ctx = SkillContext(
+        store=store, provider=provider, workspace=config.db_path.parent,
+        config=config, tome_id=req.tome_id,
+    )
     orchestrator = AgentOrchestrator(
-        provider=provider, model=model, store=store, skills=skills, skill_context=ctx
+        provider=provider, model=model, store=store, skills=skills, skill_context=ctx,
     )
 
     async def generate():
