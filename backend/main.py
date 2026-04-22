@@ -11,7 +11,16 @@ from dotenv import load_dotenv
 from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from services.arxiv import ArxivService
+# Legacy arXiv services (loaded lazily to avoid import-time dependency on arxiv package)
+_arxiv_service = None
+
+
+def _get_arxiv_service():
+    global _arxiv_service
+    if _arxiv_service is None:
+        from services.arxiv import ArxivService
+        _arxiv_service = ArxivService()
+    return _arxiv_service
 from services.pdf import PDFService
 from services.summarizer import DeepSeekService
 
