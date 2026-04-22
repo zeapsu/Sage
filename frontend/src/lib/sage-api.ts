@@ -88,3 +88,130 @@ export async function ensureDesktopBackend(): Promise<void> {
 
   return backendReadyPromise;
 }
+
+
+// ── Sage API Client ──────────────────────────────────────────
+
+type FetchOpts = {
+  method?: string;
+  body?: unknown;
+};
+
+async function apiFetch<T>(path: string, opts: FetchOpts = {}): Promise<T> {
+  const base = getApiBaseUrl();
+  const url = `${base}${path}`;
+  const res = await fetch(url, {
+    method: opts.method ?? "GET",
+    headers: { "Content-Type": "application/json" },
+    body: opts.body ? JSON.stringify(opts.body) : undefined,
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => res.statusText);
+    throw new Error(`API ${opts.method ?? "GET"} ${path} failed (${res.status}): ${text}`);
+  }
+  return res.json();
+}
+
+// ── Tomes ──
+
+export interface Tome {
+  id: string;
+  name: string;
+  description: string;
+  created_at: string;
+  source_count: number;
+  has_session: boolean;
+}
+
+export interface TomeDetail extends Tome {
+  sources: { id: string; title: string; source: string; doc_type: string }[];
+  session: { id: string; provider: string; model: string } | null;
+}
+
+export async function listTomes(): Promise<Tome[]> {
+  const data = await apiFetch<{ tomes: Tome[] }>("/api/tomes");
+  return data.tomes;
+}
+
+export async function createTome(name: string, description = ""): Promise<Tome> {
+  return apiFetch<Tome>("/api/tomes", { method: "POST", body: { name, description } });
+}
+
+export async function getTome(tomeId: string): Promise<TomeDetail> {
+  return apiFetch<TomeDetail>(`/api/tomes/${tomeId}`);
+}
+
+export async function deleteTome(tomeId: string): Promise<void> {
+  await apiFetch(`/api/tomes/${tomeId}`, { method: "DELETE" });
+}
+
+export async function linkSource(tomeId: string, documentId: string): Promise<void> {
+  await apiFetch(`/api/tomes/${tomeId}/sources`, {
+    method: "POST", body: { document_id: documentId },
+  });
+}
+
+export async function unlinkSource(tomeId: string, documentId: string): Promise<void> {
+  await apiFetch(`/api/tomes/${tomeId}/sources/${documentId}`, { method: "DELETE" });
+}
+
+// ── Documents / Ingest ──
+
+export interface IngestResult {
+  document_id: string;
+  title: string;
+  chunks: number;
+  deduplicated: boolean;
+}
+
+export async function ingestDocument(
+  title: string,
+  content: string,
+  opts: { source?: string; sourceId?: string; docType?: string; tomeId?: string } = {},
+): Promise<IngestResult> {
+  return apiFetch<IngestResult>("/api/knowledge/ingest", {
+    method: "POST",
+    body: {
+      title, content,
+      source: opts.source ?? "upload",
+      source_id: opts.sourceId ?? "",
+      doc_type: opts.docType ?? "text",
+      tome_id: opts.tomeId ?? null,
+    },
+  });
+}
+
+export async function searchKnowledge(
+  query: string, opts: { maxResults?: number; tomeId?: string } = {},
+): Promise<{ results: unknown[]; formatted: string }> {
+  return apiFetch("/api/knowledge/search", {
+    method: "POST",
+    body: {
+      query,
+      max_results: opts.maxResults ?? 5,
+      tome_id: opts.tomeId ?? null,
+    },
+  });
+}
+
+// ── Chat ──
+
+export interface ChatResponse {
+  response: string;
+  session_id: string;
+}
+
+export async function sendChat(
+  message: string, opts: { sessionId?: string; tomeId?: string; provider?: string; model?: string } = {},
+): Promise<ChatResponse> {
+  return apiFetch<ChatResponse>("/api/chat", {
+    method: "POST",
+    body: {
+      message,
+      session_id: opts.sessionId ?? null,
+      tome_id: opts.tomeId ?? null,
+      provider: opts.provider ?? null,
+      model: opts.model ?? null,
+    },
+  });
+}
