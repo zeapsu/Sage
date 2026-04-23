@@ -161,7 +161,7 @@ export default function QuizWidget({
   if (isComplete) {
     const pct = Math.round((score / total) * 100);
     return (
-      <div className="w-full max-w-[600px] px-4">
+      <div className="w-full max-w-[640px] px-4">
         <div
           className="bg-surface/80 backdrop-blur-[32px] border border-outline-variant/15
                      rounded-2xl p-8
@@ -251,7 +251,7 @@ export default function QuizWidget({
     answerState === "correct" || answerState === "incorrect";
 
   return (
-    <div className="w-full max-w-[600px] px-4">
+    <div className="w-full max-w-[640px] px-4">
       <div
         className="bg-surface/80 backdrop-blur-[32px] border border-outline-variant/15
                    rounded-2xl p-6

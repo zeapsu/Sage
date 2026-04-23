@@ -4,8 +4,9 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import CommandBar from "@/components/CommandBar";
 import QuizWidget, { SAMPLE_QUESTIONS } from "@/components/QuizWidget";
+import FlashcardWidget, { SAMPLE_FLASHCARDS } from "@/components/FlashcardWidget";
 
-type ViewState = "idle" | "quiz" | "chat";
+type ViewState = "idle" | "quiz" | "flashcards" | "chat";
 
 export default function Home() {
   const [response, setResponse] = useState<string | null>(null);
@@ -17,6 +18,9 @@ export default function Home() {
     // Simple intent detection (placeholder for real agent)
     if (lower.includes("quiz")) {
       setViewState("quiz");
+      setResponse(null);
+    } else if (lower.includes("flashcard") || lower.includes("flash card")) {
+      setViewState("flashcards");
       setResponse(null);
     } else {
       setViewState("chat");
@@ -34,7 +38,7 @@ export default function Home() {
       {/* Ambient glow */}
       <div className="ambient-glow" />
 
-      {/* Command bar — always visible, shifts up when idle */}
+      {/* Command bar — always visible */}
       <div className={`relative z-10 transition-all duration-500 ease-out ${viewState !== "idle" ? "pt-0" : "pt-8"}`}>
         <CommandBar onSubmit={handleSubmit} />
       </div>
@@ -48,7 +52,7 @@ export default function Home() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -8, scale: 0.98 }}
             transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}
-            className="relative z-10"
+            className="relative z-10 w-full flex flex-col items-center gap-4"
           >
             <QuizWidget
               title="Transformers Quiz"
@@ -57,17 +61,40 @@ export default function Home() {
                 console.log(`Quiz complete: ${score}/${total}`);
               }}
             />
-            <div className="flex justify-center mt-4">
-              <button
-                onClick={handleBack}
-                className="px-4 py-1.5 rounded-full text-label-sm
-                           border border-outline-variant/15 text-on-surface-variant
-                           hover:border-outline-variant/30 hover:text-on-surface
-                           transition-all duration-150"
-              >
-                ← Back
-              </button>
-            </div>
+            <button
+              onClick={handleBack}
+              className="px-4 py-1.5 rounded-full text-label-sm
+                         border border-outline-variant/15 text-on-surface-variant
+                         hover:border-outline-variant/30 hover:text-on-surface
+                         transition-all duration-150"
+            >
+              ← Back
+            </button>
+          </motion.div>
+        )}
+
+        {viewState === "flashcards" && (
+          <motion.div
+            key="flashcards"
+            initial={{ opacity: 0, y: 12, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -8, scale: 0.98 }}
+            transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}
+            className="relative z-10 w-full flex flex-col items-center gap-4"
+          >
+            <FlashcardWidget
+              title="Transformer Concepts"
+              cards={SAMPLE_FLASHCARDS}
+            />
+            <button
+              onClick={handleBack}
+              className="px-4 py-1.5 rounded-full text-label-sm
+                         border border-outline-variant/15 text-on-surface-variant
+                         hover:border-outline-variant/30 hover:text-on-surface
+                         transition-all duration-150"
+            >
+              ← Back
+            </button>
           </motion.div>
         )}
 
