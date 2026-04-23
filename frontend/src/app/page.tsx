@@ -6,153 +6,135 @@ import CommandBar from "@/components/CommandBar";
 import QuizWidget, { SAMPLE_QUESTIONS } from "@/components/QuizWidget";
 import FlashcardWidget, { SAMPLE_FLASHCARDS } from "@/components/FlashcardWidget";
 import AudioPlayerWidget, { SAMPLE_TRACK } from "@/components/AudioPlayerWidget";
+import ReportViewWidget, { SAMPLE_REPORT } from "@/components/ReportViewWidget";
+import HistoryPanel from "@/components/HistoryPanel";
+import TomeSelector from "@/components/TomeSelector";
+import ChatWidget from "@/components/ChatWidget";
 
-type ViewState = "idle" | "quiz" | "flashcards" | "audio" | "chat";
+type ViewState = "idle" | "quiz" | "flashcards" | "audio" | "report" | "history" | "tomes" | "chat";
 
 export default function Home() {
-  const [response, setResponse] = useState<string | null>(null);
   const [viewState, setViewState] = useState<ViewState>("idle");
 
   const handleSubmit = (text: string) => {
     const lower = text.toLowerCase().trim();
 
-    // Simple intent detection (placeholder for real agent)
     if (lower.includes("quiz")) {
       setViewState("quiz");
     } else if (lower.includes("flashcard") || lower.includes("flash card")) {
       setViewState("flashcards");
     } else if (lower.includes("audio") || lower.includes("listen") || lower.includes("podcast")) {
       setViewState("audio");
+    } else if (lower.includes("report") || lower.includes("study guide") || lower.includes("summary")) {
+      setViewState("report");
+    } else if (lower.includes("history")) {
+      setViewState("history");
+    } else if (lower.includes("tome") || lower.includes("collection") || lower.includes("library")) {
+      setViewState("tomes");
     } else {
       setViewState("chat");
-      setResponse(text);
-      return;
     }
-    setResponse(null);
   };
 
   const handleBack = () => {
     setViewState("idle");
-    setResponse(null);
   };
+
+  const cardVariants = {
+    initial: { opacity: 0, y: 16, scale: 0.97 },
+    animate: { opacity: 1, y: 0, scale: 1 },
+    exit: { opacity: 0, y: -10, scale: 0.97 },
+  };
+
+  const cardTransition = { duration: 0.28, ease: [0.25, 0.46, 0.45, 0.94] };
 
   return (
     <main className="relative w-full min-h-screen flex flex-col items-center pt-24 pb-12 gap-5">
       {/* Ambient glow */}
       <div className="ambient-glow" />
 
-      {/* Command bar — always visible */}
-      <div className={`relative z-10 transition-all duration-500 ease-out ${viewState !== "idle" ? "pt-0" : "pt-8"}`}>
+      {/* Command bar — always visible, shifts up when content appears */}
+      <div
+        className={`relative z-10 transition-all duration-500 ease-out ${
+          viewState !== "idle" ? "pt-0" : "pt-8"
+        }`}
+      >
         <CommandBar onSubmit={handleSubmit} />
       </div>
 
-      {/* Content area — animated cards */}
+      {/* Content area */}
       <AnimatePresence mode="wait">
         {viewState === "quiz" && (
-          <motion.div
-            key="quiz"
-            initial={{ opacity: 0, y: 12, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -8, scale: 0.98 }}
-            transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}
-            className="relative z-10 w-full flex flex-col items-center gap-4"
-          >
-            <QuizWidget
-              title="Transformers Quiz"
-              questions={SAMPLE_QUESTIONS}
-              onComplete={(score, total) => {
-                console.log(`Quiz complete: ${score}/${total}`);
-              }}
-            />
-            <button
-              onClick={handleBack}
-              className="px-4 py-1.5 rounded-full text-label-sm
-                         border border-outline-variant/15 text-on-surface-variant
-                         hover:border-outline-variant/30 hover:text-on-surface
-                         transition-all duration-150"
-            >
-              ← Back
-            </button>
+          <motion.div key="quiz" {...cardVariants} transition={cardTransition}
+            className="relative z-10 w-full flex flex-col items-center gap-4">
+            <QuizWidget title="Transformers Quiz" questions={SAMPLE_QUESTIONS} />
+            <BackButton onClick={handleBack} />
           </motion.div>
         )}
 
         {viewState === "flashcards" && (
-          <motion.div
-            key="flashcards"
-            initial={{ opacity: 0, y: 12, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -8, scale: 0.98 }}
-            transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}
-            className="relative z-10 w-full flex flex-col items-center gap-4"
-          >
-            <FlashcardWidget
-              title="Transformer Concepts"
-              cards={SAMPLE_FLASHCARDS}
-            />
-            <button
-              onClick={handleBack}
-              className="px-4 py-1.5 rounded-full text-label-sm
-                         border border-outline-variant/15 text-on-surface-variant
-                         hover:border-outline-variant/30 hover:text-on-surface
-                         transition-all duration-150"
-            >
-              ← Back
-            </button>
+          <motion.div key="flashcards" {...cardVariants} transition={cardTransition}
+            className="relative z-10 w-full flex flex-col items-center gap-4">
+            <FlashcardWidget title="Transformer Concepts" cards={SAMPLE_FLASHCARDS} />
+            <BackButton onClick={handleBack} />
           </motion.div>
         )}
 
         {viewState === "audio" && (
-          <motion.div
-            key="audio"
-            initial={{ opacity: 0, y: 12, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -8, scale: 0.98 }}
-            transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}
-            className="relative z-10 w-full flex flex-col items-center gap-4"
-          >
+          <motion.div key="audio" {...cardVariants} transition={cardTransition}
+            className="relative z-10 w-full flex flex-col items-center gap-4">
             <AudioPlayerWidget track={SAMPLE_TRACK} />
-            <button
-              onClick={handleBack}
-              className="px-4 py-1.5 rounded-full text-label-sm
-                         border border-outline-variant/15 text-on-surface-variant
-                         hover:border-outline-variant/30 hover:text-on-surface
-                         transition-all duration-150"
-            >
-              ← Back
-            </button>
+            <BackButton onClick={handleBack} />
           </motion.div>
         )}
 
-        {viewState === "chat" && response && (
-          <motion.div
-            key="chat"
-            initial={{ opacity: 0, y: 12, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -8, scale: 0.98 }}
-            transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}
-            className="relative z-10 w-full max-w-[640px] px-4"
-          >
-            <div
-              className="bg-surface/80 backdrop-blur-[32px] border border-outline-variant/15
-                         p-6 text-body-md text-on-surface rounded-2xl
-                         shadow-[0_8px_32px_rgba(0,0,0,0.4),0_0_60px_rgba(173,198,255,0.04)]"
-            >
-              {response}
-            </div>
-            <div className="flex justify-center mt-4">
-              <button
-                onClick={handleBack}
-                className="px-4 py-1.5 rounded-full text-label-sm
-                           border border-outline-variant/15 text-on-surface-variant
-                           hover:border-outline-variant/30 hover:text-on-surface
-                           transition-all duration-150"
-              >
-                ← Back
-              </button>
-            </div>
+        {viewState === "report" && (
+          <motion.div key="report" {...cardVariants} transition={cardTransition}
+            className="relative z-10 w-full flex flex-col items-center gap-4">
+            <ReportViewWidget report={SAMPLE_REPORT} />
+            <BackButton onClick={handleBack} />
+          </motion.div>
+        )}
+
+        {viewState === "history" && (
+          <motion.div key="history" {...cardVariants} transition={cardTransition}
+            className="relative z-10 w-full flex flex-col items-center gap-4">
+            <HistoryPanel />
+            <BackButton onClick={handleBack} />
+          </motion.div>
+        )}
+
+        {viewState === "tomes" && (
+          <motion.div key="tomes" {...cardVariants} transition={cardTransition}
+            className="relative z-10 w-full flex flex-col items-center gap-4">
+            <TomeSelector />
+            <BackButton onClick={handleBack} />
+          </motion.div>
+        )}
+
+        {viewState === "chat" && (
+          <motion.div key="chat" {...cardVariants} transition={cardTransition}
+            className="relative z-10 w-full flex flex-col items-center gap-4">
+            <ChatWidget />
+            <BackButton onClick={handleBack} />
           </motion.div>
         )}
       </AnimatePresence>
     </main>
+  );
+}
+
+/** Shared back button */
+function BackButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className="px-4 py-1.5 rounded-full text-label-sm
+                 border border-outline-variant/15 text-on-surface-variant
+                 hover:border-outline-variant/30 hover:text-on-surface
+                 transition-all duration-150"
+    >
+      ← Back
+    </button>
   );
 }

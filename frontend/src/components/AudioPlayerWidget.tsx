@@ -155,7 +155,7 @@ export default function AudioPlayerWidget({ track }: AudioPlayerWidgetProps) {
 
   const handleNext = useCallback(() => {
     setCurrentTime((t) => Math.min(track.duration, t + 15));
-  }, []);
+  }, [track.duration]);
 
   const progress = track.duration > 0 ? (currentTime / track.duration) * 100 : 0;
 
