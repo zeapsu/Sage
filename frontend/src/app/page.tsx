@@ -1,52 +1,106 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import CommandBar from "@/components/CommandBar";
-import { ensureDesktopBackend } from "@/lib/sage-api";
+import QuizWidget, { SAMPLE_QUESTIONS } from "@/components/QuizWidget";
+
+type ViewState = "idle" | "quiz" | "chat";
 
 export default function Home() {
   const [response, setResponse] = useState<string | null>(null);
-  const [startupError, setStartupError] = useState<string | null>(null);
+  const [viewState, setViewState] = useState<ViewState>("idle");
 
-  useEffect(() => {
-    let isActive = true;
+  const handleSubmit = (text: string) => {
+    const lower = text.toLowerCase().trim();
 
-    ensureDesktopBackend().catch((error) => {
-      console.error("Failed to start Sage backend", error);
-      if (isActive) {
-        setStartupError("Error: Could not start the bundled Sage backend.");
-      }
-    });
+    // Simple intent detection (placeholder for real agent)
+    if (lower.includes("quiz")) {
+      setViewState("quiz");
+      setResponse(null);
+    } else {
+      setViewState("chat");
+      setResponse(text);
+    }
+  };
 
-    return () => {
-      isActive = false;
-    };
-  }, []);
+  const handleBack = () => {
+    setViewState("idle");
+    setResponse(null);
+  };
 
   return (
-    <main className="relative w-full h-screen flex flex-col items-center pt-20">
+    <main className="relative w-full min-h-screen flex flex-col items-center pt-24 pb-12 gap-5">
       {/* Ambient glow */}
       <div className="ambient-glow" />
 
-      {/* The floating command bar */}
-      <CommandBar onSubmit={setResponse} />
+      {/* Command bar — always visible, shifts up when idle */}
+      <div className={`relative z-10 transition-all duration-500 ease-out ${viewState !== "idle" ? "pt-0" : "pt-8"}`}>
+        <CommandBar onSubmit={handleSubmit} />
+      </div>
 
-      {startupError && (
-        <div className="mt-4 w-full max-w-[600px] px-4">
-          <div className="bg-surface/80 backdrop-blur-[32px] border border-outline-variant/15 p-6 text-body-md text-on-surface rounded-md shadow-[0_8px_32px_rgba(0,0,0,0.4),0_0_60px_rgba(173,198,255,0.04)]">
-            {startupError}
-          </div>
-        </div>
-      )}
+      {/* Content area — animated cards */}
+      <AnimatePresence mode="wait">
+        {viewState === "quiz" && (
+          <motion.div
+            key="quiz"
+            initial={{ opacity: 0, y: 12, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -8, scale: 0.98 }}
+            transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}
+            className="relative z-10"
+          >
+            <QuizWidget
+              title="Transformers Quiz"
+              questions={SAMPLE_QUESTIONS}
+              onComplete={(score, total) => {
+                console.log(`Quiz complete: ${score}/${total}`);
+              }}
+            />
+            <div className="flex justify-center mt-4">
+              <button
+                onClick={handleBack}
+                className="px-4 py-1.5 rounded-full text-label-sm
+                           border border-outline-variant/15 text-on-surface-variant
+                           hover:border-outline-variant/30 hover:text-on-surface
+                           transition-all duration-150"
+              >
+                ← Back
+              </button>
+            </div>
+          </motion.div>
+        )}
 
-      {/* Response area (expands below bar) */}
-      {response && (
-        <div className="mt-4 w-full max-w-[600px] px-4">
-          <div className="bg-surface/80 backdrop-blur-[32px] border border-outline-variant/15 p-6 text-body-md text-on-surface rounded-md shadow-[0_8px_32px_rgba(0,0,0,0.4),0_0_60px_rgba(173,198,255,0.04)]">
-            {response}
-          </div>
-        </div>
-      )}
+        {viewState === "chat" && response && (
+          <motion.div
+            key="chat"
+            initial={{ opacity: 0, y: 12, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -8, scale: 0.98 }}
+            transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}
+            className="relative z-10 w-full max-w-[600px] px-4"
+          >
+            <div
+              className="bg-surface/80 backdrop-blur-[32px] border border-outline-variant/15
+                         p-6 text-body-md text-on-surface rounded-2xl
+                         shadow-[0_8px_32px_rgba(0,0,0,0.4),0_0_60px_rgba(173,198,255,0.04)]"
+            >
+              {response}
+            </div>
+            <div className="flex justify-center mt-4">
+              <button
+                onClick={handleBack}
+                className="px-4 py-1.5 rounded-full text-label-sm
+                           border border-outline-variant/15 text-on-surface-variant
+                           hover:border-outline-variant/30 hover:text-on-surface
+                           transition-all duration-150"
+              >
+                ← Back
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </main>
   );
 }

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { ensureDesktopBackend, getApiBaseUrl } from "@/lib/sage-api";
 
 interface CommandBarProps {
   onSubmit: (response: string) => void;
@@ -21,31 +20,10 @@ export default function CommandBar({ onSubmit }: CommandBarProps) {
     if (!query.trim() || isLoading) return;
 
     setIsLoading(true);
-    try {
-      await ensureDesktopBackend();
-
-      const res = await fetch(`${getApiBaseUrl()}/api/chat`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: query }),
-      });
-
-      if (!res.ok) {
-        throw new Error(`Sage backend returned ${res.status}.`);
-      }
-
-      const data: { response?: string } = await res.json();
-      onSubmit(data.response ?? "No response returned from Sage backend.");
-    } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : "Could not connect to Sage backend. Is it running?";
-      onSubmit(`Error: ${message}`);
-    } finally {
-      setIsLoading(false);
-      setQuery("");
-    }
+    // Pass the raw query up — parent decides what to do with it
+    onSubmit(query.trim());
+    setQuery("");
+    setIsLoading(false);
   };
 
   return (
@@ -82,7 +60,7 @@ export default function CommandBar({ onSubmit }: CommandBarProps) {
         <div className="flex items-center gap-1 bg-surface-container-high rounded-full px-2.5 py-1 border border-outline-variant/10 flex-shrink-0 cursor-default hover:border-primary/40 transition-colors">
           <span className="text-label-sm text-primary leading-none">⚡</span>
           <span className="text-label-sm text-on-surface-variant font-medium uppercase leading-none mt-[1px]">
-            {isLoading ? "..." : "Ollama"}
+            GPT-4o
           </span>
         </div>
       </div>
