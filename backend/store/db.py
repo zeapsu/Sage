@@ -231,6 +231,53 @@ class KnowledgeStore:
         self.conn.commit()
         return s
 
+    def list_sessions(self, limit: int = 100) -> list[dict]:
+        """List chat sessions with a derived title, tome name, and activity timestamps.
+
+        Returns rows shaped for the History panel — newest activity first."""
+        rows = self.conn.execute(
+            """
+            SELECT
+                s.id                AS id,
+                s.tome_id           AS tome_id,
+                s.provider          AS provider,
+                s.model             AS model,
+                s.created_at        AS created_at,
+                t.name              AS tome_name,
+                (SELECT content FROM messages
+                   WHERE session_id = s.id AND role = 'user'
+                   ORDER BY created_at ASC LIMIT 1) AS first_user_message,
+                (SELECT created_at FROM messages
+                   WHERE session_id = s.id
+                   ORDER BY created_at DESC LIMIT 1) AS last_message_at,
+                (SELECT COUNT(*) FROM messages
+                   WHERE session_id = s.id) AS message_count
+            FROM sessions s
+            LEFT JOIN tomes t ON t.id = s.tome_id
+            ORDER BY COALESCE(
+                (SELECT created_at FROM messages
+                   WHERE session_id = s.id ORDER BY created_at DESC LIMIT 1),
+                s.created_at
+            ) DESC
+            LIMIT ?
+            """,
+            (limit,),
+        ).fetchall()
+        return [
+            {
+                "id": r["id"],
+                "tome_id": r["tome_id"],
+                "tome_name": r["tome_name"],
+                "provider": r["provider"],
+                "model": r["model"],
+                "created_at": r["created_at"],
+                "last_message_at": r["last_message_at"] or r["created_at"],
+                "first_user_message": r["first_user_message"],
+                "message_count": r["message_count"] or 0,
+            }
+            for r in rows
+        ]
+
     def get_tome_session(self, tome_id: str) -> Optional[Session]:
         """Get the most recent session for a tome."""
         row = self.conn.execute(
