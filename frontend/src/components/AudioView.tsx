@@ -1,0 +1,116 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import AudioPlayerWidget from "./AudioPlayerWidget";
+import {
+  generateAudio,
+  resolveAudioUrl,
+  type AudioGeneration,
+  type GeneratedSource,
+} from "@/lib/sage-api";
+
+interface AudioViewProps {
+  prompt: string;
+  tomeId?: string;
+  voice?: string;
+}
+
+export default function AudioView({ prompt, tomeId, voice }: AudioViewProps) {
+  const [data, setData] = useState<AudioGeneration | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    setData(null);
+    setError(null);
+    generateAudio({ topic: prompt || undefined, tomeId, voice })
+      .then((res) => {
+        if (!cancelled) setData(res);
+      })
+      .catch((err) => {
+        if (!cancelled) setError(err instanceof Error ? err.message : String(err));
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [prompt, tomeId, voice, reloadKey]);
+
+  if (error) {
+    return (
+      <StatusCard
+        icon="error"
+        title="Couldn't generate audio"
+        detail={error}
+        onRetry={() => setReloadKey((k) => k + 1)}
+      />
+    );
+  }
+
+  if (!data) {
+    return (
+      <StatusCard
+        icon="hourglass_top"
+        title="Generating narration…"
+        detail="Searching your knowledge base and writing the script. If server-side TTS isn't configured, playback will use your browser's voice."
+      />
+    );
+  }
+
+  const track = {
+    id: data.id,
+    title: data.title,
+    voice: data.voice,
+    duration: data.duration,
+    transcript: data.segments,
+  };
+  const audioUrl = data.audio_url ? resolveAudioUrl(data.audio_url) : null;
+
+  return (
+    <div className="flex flex-col items-center gap-3">
+      <AudioPlayerWidget track={track} audioUrl={audioUrl} script={data.script} />
+      {data.sources.length > 0 && <SourcesFooter sources={data.sources} />}
+    </div>
+  );
+}
+
+function StatusCard({
+  icon, title, detail, onRetry,
+}: { icon: string; title: string; detail?: string; onRetry?: () => void }) {
+  return (
+    <div className="w-full max-w-[640px] px-4">
+      <div className="bg-surface/80 backdrop-blur-[32px] border border-outline-variant/15 rounded-2xl px-6 py-8
+                      shadow-[0_8px_32px_rgba(0,0,0,0.4)] flex flex-col items-center gap-2 text-center">
+        <span className="material-symbols-outlined text-primary text-3xl">{icon}</span>
+        <div className="text-title-md text-on-surface">{title}</div>
+        {detail && <div className="text-body-md text-on-surface-variant max-w-[480px]">{detail}</div>}
+        {onRetry && (
+          <button
+            onClick={onRetry}
+            className="mt-2 px-3 py-1 rounded-full text-label-md border border-outline-variant/20
+                       text-on-surface-variant hover:border-primary/40 hover:text-on-surface transition-colors"
+          >
+            Try again
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function SourcesFooter({ sources }: { sources: GeneratedSource[] }) {
+  const unique = Array.from(new Map(sources.map((s) => [s.document_id, s])).values());
+  return (
+    <div className="w-full max-w-[640px] px-4 text-label-sm text-on-surface-variant flex flex-wrap gap-1.5 justify-center">
+      <span className="text-on-surface-variant/60">Grounded in:</span>
+      {unique.map((s) => (
+        <span
+          key={s.document_id}
+          className="bg-surface-container-low border border-outline-variant/10 rounded-full px-2.5 py-0.5"
+        >
+          {s.document_title}
+        </span>
+      ))}
+    </div>
+  );
+}
