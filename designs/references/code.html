@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Ethereal Console - Sage</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-dim": "#131313",
+                        "secondary-fixed-dim": "#c8c6c5",
+                        "on-error": "#690005",
+                        "surface-container-highest": "#353534",
+                        "error-container": "#93000a",
+                        "primary": "#adc6ff",
+                        "on-background": "#e5e2e1",
+                        "on-secondary-fixed-variant": "#474746",
+                        "on-secondary-container": "#b7b5b4",
+                        "on-primary-container": "#00285d",
+                        "on-primary-fixed": "#001a42",
+                        "background": "#131313",
+                        "surface-variant": "#353534",
+                        "primary-fixed-dim": "#adc6ff",
+                        "error": "#ffb4ab",
+                        "inverse-on-surface": "#313030",
+                        "surface": "#131313",
+                        "primary-fixed": "#d8e2ff",
+                        "tertiary-fixed-dim": "#ffb786",
+                        "on-tertiary": "#502400",
+                        "surface-container-high": "#2a2a2a",
+                        "outline": "#8c909f",
+                        "on-error-container": "#ffdad6",
+                        "outline-variant": "#424754",
+                        "on-tertiary-container": "#461f00",
+                        "secondary": "#c8c6c5",
+                        "tertiary": "#ffb786",
+                        "tertiary-container": "#df7412",
+                        "on-secondary-fixed": "#1b1c1c",
+                        "on-tertiary-fixed": "#311400",
+                        "secondary-container": "#474746",
+                        "surface-tint": "#adc6ff",
+                        "secondary-fixed": "#e5e2e1",
+                        "on-primary-fixed-variant": "#004395",
+                        "on-secondary": "#303030",
+                        "on-primary": "#002e6a",
+                        "surface-bright": "#3a3939",
+                        "inverse-primary": "#005ac2",
+                        "surface-container-low": "#1c1b1b",
+                        "tertiary-fixed": "#ffdcc6",
+                        "on-tertiary-fixed-variant": "#723600",
+                        "on-surface": "#e5e2e1",
+                        "primary-container": "#4d8eff",
+                        "surface-container-lowest": "#0e0e0e",
+                        "surface-container": "#201f1f",
+                        "on-surface-variant": "#c2c6d6",
+                        "inverse-surface": "#e5e2e1"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "1rem",
+                        "lg": "2rem",
+                        "xl": "3rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Inter", "sans-serif"],
+                        "body": ["Inter", "sans-serif"],
+                        "label": ["Inter", "sans-serif"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0e0e0e; /* surface-container-lowest */
+        }
+        
+        /* Custom input focus reset to maintain clean ethereal look */
+        input:focus {
+            outline: none !important;
+            box-shadow: none !important;
+        }
+
+        /* Ambient glow animation for the backdrop */
+        .ambient-glow {
+            position: absolute;
+            top: 20%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 600px;
+            height: 100px;
+            background: radial-gradient(ellipse at center, rgba(173,198,255,0.08) 0%, rgba(13,13,13,0) 70%);
+            filter: blur(40px);
+            pointer-events: none;
+            z-index: 0;
+        }
+    </style>
+</head>
+<body class="min-h-screen w-full relative overflow-hidden flex justify-center items-start pt-[204px] text-on-surface">
+<!-- Ambient background light to emphasize the ethereal layer -->
+<div class="ambient-glow"></div>
+<!-- State 1: Compact Input (Initial) -->
+<main class="relative z-10 w-full max-w-[600px] px-4 md:px-0">
+<!-- The Floating Command Palette -->
+<div class="h-[48px] w-full bg-surface/80 backdrop-blur-[32px] rounded-full border border-outline-variant/15 flex items-center px-4 shadow-[0_8px_32px_rgba(0,0,0,0.4),0_0_60px_rgba(173,198,255,0.04)] transition-all duration-300 hover:border-outline-variant/30">
+<!-- Left: Sage Sparkle Icon -->
+<span class="material-symbols-outlined text-primary text-xl flex-shrink-0" style="font-variation-settings: 'FILL' 1;">
+                auto_awesome
+            </span>
+<!-- Center: Text Input -->
+<input autocomplete="off" class="flex-1 h-full bg-transparent border-none text-on-surface placeholder:text-on-surface-variant/60 text-[0.875rem] font-body px-3 w-full" placeholder="Ask about your knowledge base..." spellcheck="false" type="text"/>
+<!-- Right: Small Badge -->
+<div class="flex items-center gap-1 bg-surface-container-high rounded-full px-2.5 py-1 border border-outline-variant/10 flex-shrink-0 transition-colors hover:border-primary/40 cursor-default">
+<span class="text-[0.6875rem] text-primary leading-none">⚡</span>
+<span class="text-[0.6875rem] text-on-surface-variant font-medium tracking-[0.05em] uppercase leading-none mt-[1px]">
+                    GPT-4o
+                </span>
+</div>
+</div>
+</main>
+</body></html>
