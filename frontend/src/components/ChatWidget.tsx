@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
+import { sendChat, getRuntimeConfig } from "@/lib/sage-api";
 
 // --- Types ---
 
@@ -14,8 +15,14 @@ interface ChatMessage {
 interface ChatWidgetProps {
   tomeName?: string;
   providerName?: string;
+  tomeId?: string;
+  provider?: string;
+  model?: string;
   messages?: ChatMessage[];
+  initialQuery?: string;
   onSend?: (message: string) => void;
+  /** If returns true, ChatWidget skips backend chat — parent has routed elsewhere. */
+  onCommand?: (message: string) => boolean;
   isLoading?: boolean;
 }
 
@@ -52,48 +59,103 @@ export const SAMPLE_MESSAGES: ChatMessage[] = [
 
 export default function ChatWidget({
   tomeName = "Deep Learning Foundations",
-  providerName = "GPT-4o",
-  messages: initialMessages = SAMPLE_MESSAGES,
+  providerName,
+  tomeId,
+  provider,
+  model,
+  messages: initialMessages,
+  initialQuery,
   onSend,
-  isLoading = false,
+  onCommand,
+  isLoading: isLoadingProp,
 }: ChatWidgetProps) {
-  const [messages, setMessages] = useState(initialMessages);
+  const [messages, setMessages] = useState<ChatMessage[]>(initialMessages ?? []);
   const [input, setInput] = useState("");
+  const [internalLoading, setInternalLoading] = useState(false);
+  const [sessionId, setSessionId] = useState<string | undefined>(undefined);
+  const [resolvedModel, setResolvedModel] = useState<string | undefined>(model);
+
+  useEffect(() => {
+    if (providerName || model) return;
+    let cancelled = false;
+    getRuntimeConfig()
+      .then((cfg) => {
+        if (!cancelled) setResolvedModel(cfg.model || cfg.provider);
+      })
+      .catch(() => {
+        if (!cancelled) setResolvedModel("offline");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [providerName, model]);
+
+  const modelLabel = providerName ?? resolvedModel ?? "…";
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const initialSentRef = useRef(false);
+
+  const isLoading = isLoadingProp ?? internalLoading;
 
   // Auto-scroll to bottom
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages]);
+  }, [messages, isLoading]);
+
+  const sendToBackend = useCallback(
+    async (text: string) => {
+      const userMsg: ChatMessage = {
+        id: `u-${Date.now()}`,
+        role: "user",
+        content: text,
+        timestamp: new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }),
+      };
+      setMessages((prev) => [...prev, userMsg]);
+      onSend?.(text);
+      setInternalLoading(true);
+
+      try {
+        const res = await sendChat(text, { sessionId, tomeId, provider, model });
+        if (!sessionId) setSessionId(res.session_id);
+        const assistantMsg: ChatMessage = {
+          id: `a-${Date.now()}`,
+          role: "assistant",
+          content: res.response,
+          timestamp: new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }),
+        };
+        setMessages((prev) => [...prev, assistantMsg]);
+      } catch (err) {
+        const errorMsg: ChatMessage = {
+          id: `e-${Date.now()}`,
+          role: "assistant",
+          content: `**Error reaching backend:** ${err instanceof Error ? err.message : String(err)}`,
+          timestamp: new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }),
+        };
+        setMessages((prev) => [...prev, errorMsg]);
+      } finally {
+        setInternalLoading(false);
+      }
+    },
+    [sessionId, tomeId, provider, model, onSend],
+  );
+
+  // Auto-send initial query (e.g. from CommandBar)
+  useEffect(() => {
+    if (initialQuery && !initialSentRef.current) {
+      initialSentRef.current = true;
+      if (onCommand?.(initialQuery)) return;
+      void sendToBackend(initialQuery);
+    }
+  }, [initialQuery, sendToBackend, onCommand]);
 
   const handleSend = () => {
     const text = input.trim();
     if (!text || isLoading) return;
-
-    const userMsg: ChatMessage = {
-      id: `u-${Date.now()}`,
-      role: "user",
-      content: text,
-      timestamp: new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }),
-    };
-
-    setMessages((prev) => [...prev, userMsg]);
     setInput("");
-    onSend?.(text);
-
-    // Simulate assistant response for prototyping
-    setTimeout(() => {
-      const assistantMsg: ChatMessage = {
-        id: `a-${Date.now()}`,
-        role: "assistant",
-        content: `I received your message: "${text}". In the real app, the agent would process this using the ${tomeName} tome and ${providerName}.`,
-        timestamp: new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }),
-      };
-      setMessages((prev) => [...prev, assistantMsg]);
-    }, 1500);
+    if (onCommand?.(text)) return;
+    void sendToBackend(text);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -123,8 +185,7 @@ export default function ChatWidget({
               <span className="text-label-sm text-on-surface-variant truncate max-w-[140px]">{tomeName}</span>
             </div>
             <div className="flex items-center gap-1 bg-surface-container-high rounded-full px-2.5 py-1 border border-outline-variant/10">
-              <span className="text-label-sm text-primary leading-none">⚡</span>
-              <span className="text-label-sm text-on-surface-variant uppercase leading-none">{providerName}</span>
+              <span className="text-label-sm text-on-surface-variant uppercase leading-none">{modelLabel}</span>
             </div>
           </div>
         </div>
@@ -134,11 +195,10 @@ export default function ChatWidget({
           {messages.map((msg) => (
             <div key={msg.id} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
               <div
-                className={`max-w-[85%] rounded-2xl px-4 py-3 ${
-                  msg.role === "user"
+                className={`max-w-[85%] rounded-2xl px-4 py-3 ${msg.role === "user"
                     ? "bg-primary/15 border border-primary/20 text-on-surface"
                     : "bg-surface-container-low border border-outline-variant/10 text-on-surface-variant"
-                }`}
+                  }`}
               >
                 <div className="text-body-md leading-relaxed whitespace-pre-wrap">{msg.content}</div>
                 <div className={`text-label-sm mt-1.5 ${msg.role === "user" ? "text-primary/50" : "text-on-surface-variant/40"}`}>
