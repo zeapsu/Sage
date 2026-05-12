@@ -1,153 +1,154 @@
-# Sage: Local Knowledge Agent
+# Sage
 
-> *Formerly "arXiv Sage" — evolving from a RAG summarizer into a local-first knowledge agent.*
+> A local-first desktop knowledge agent for turning your own sources into chat, reports, quizzes, flashcards, and audio reviews.
 
-A local-first desktop app where you bring your own documents, connect any AI agent, and generate structured learning outputs — quizzes, flashcards, audio reviews, and reports — powered by a skill/tool system.
+Sage is a Tauri + Next.js + FastAPI app for working with a personal knowledge base. The core workflow is simple: bring documents into a local store, organize focused source sets as Tomes, then ask Sage to synthesize grounded outputs from those sources.
 
-## Features
+## Vision
 
-- **Research Made Accessible**: Search arXiv's vast repository with simple keywords
-- **AI-Powered Summaries**: Automatically transform dense research papers into concise, engaging summaries
-- **Instagram-Style Feed**: Browse summaries in a familiar, visually appealing format
-- **Desktop Application**: Convenient, secure, and lightweight Tauri-based app for Windows, Mac, and Linux
+Sage is moving toward a NotebookLM-like experience that stays local-first and provider-flexible:
+
+- **Bring your own sources**: PDFs, Markdown, notes, pasted text, and eventually web captures or vault syncs.
+- **Tomes**: focused workspaces that isolate source sets and chat history.
+- **Bring your own agent/provider**: local models, Ollama, OpenAI-compatible APIs, Anthropic, DeepSeek, and other providers through a small backend abstraction.
+- **Grounded outputs**: chat, reports, quizzes, flashcards, and audio reviews that cite or otherwise remain tied to the selected sources.
+- **Floating desktop UX**: an Ethereal Console style interface that feels like a lightweight intelligence layer over the OS.
+
+arXiv support and paper summarization remain useful discovery paths, but they are no longer the center of the product. The main direction is user-owned local knowledge.
+
+## Current Features
+
+- **Tauri desktop shell** with a Next.js 15 frontend.
+- **FastAPI backend** for knowledge, chat, Tomes, providers, and research discovery endpoints.
+- **Local knowledge store** with document chunks, embeddings, sessions, and Tome/source links.
+- **Floating command UI** with chat, report, quiz, flashcard, audio, history, and Tome-oriented components.
+- **Tailwind v4 design tokens** for the dark Ethereal Console visual system.
+- **pytest backend suite** and GitHub Actions CI.
+
+## Project Direction Docs
+
+Several planning/specification files in the repo describe where Sage is headed:
+
+- `BRAINSTORM.md`: product direction from arXiv summarizer to local knowledge agent.
+- `DESIGN.md`: Ethereal Console UI/UX specification.
+- `PLAN.md`: implementation plan for the local knowledge agent foundation.
+- `AGENT_SKILL_SPEC.md`: contract between backend skills and frontend UI components.
+- `STITCH_PROMPT.md`: original design prompt/reference for the floating UI.
+- `SESSION_CONTEXT.md`: current project state and next-session context.
+- `LEGACY_CLEANUP_PLAN.md`: notes for removing old pre-Ethereal components.
 
 ## Tech Stack
 
 ### Frontend
 
-- **Next.js**: React framework for building the user interface
-- **Tauri**: Wraps the web app into a lightweight desktop application
-- **Tailwind CSS**: Utility-first CSS framework for styling
-- **React Component Library**: UI components for consistent design
+- Next.js 15
+- React 19
+- Tailwind CSS v4
+- Tauri v2 desktop shell
+- Framer Motion for interactive UI pieces
 
 ### Backend
 
-- **FastAPI**: High-performance Python web framework
-- **arXiv API**: Integration for fetching research papers
-- **PDF Processing**: Extraction of text from research PDFs
-- **DeepSeek API**: AI-powered text summarization
+- FastAPI
+- Python 3.11+
+- SQLite-backed local knowledge/session store
+- sentence-transformers embeddings
+- Provider abstraction for local and hosted LLMs
+- `uv` for dependency management
 
 ## Getting Started
 
 ### Prerequisites
 
-- Node.js (v14+)
-- Rust (latest stable version)
-- Python (v3.8+)
-- npm or yarn
+- Node.js 20+
+- Rust, latest stable
+- Python 3.11+
+- `uv`
 
 ### Backend Setup
 
-1. Create a Python virtual environment:
-
 ```bash
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+cd backend
+uv sync --group dev
+uv run uvicorn main:app --reload
 ```
 
-2. Install backend dependencies:
+The backend creates default local config under `~/.sage/` when needed.
+
+Optional provider keys can be configured through environment variables or Sage config, for example:
 
 ```bash
-pip install -r requirements.txt
-```
-
-3. Set up environment variables:
-
-```bash
-# Create a .env file in the backend directory
-DEEPSEEK_API_KEY=your_deepseek_api_key
-```
-
-4. Start the FastAPI server:
-
-```bash
-uvicorn main:app --reload
+OPENAI_API_KEY=...
+ANTHROPIC_API_KEY=...
+DEEPSEEK_API_KEY=...
 ```
 
 ### Frontend Setup
 
-1. Install frontend dependencies (inside frontend directory):
-
 ```bash
+cd frontend
 npm install
-# or
-yarn install
-```
-
-2. Run the development server:
-
-```bash
 npm run dev
-# or
-yarn dev
 ```
 
-3. For Tauri development:
+### Tauri Development
+
+From `frontend/`:
 
 ```bash
-npm run tauri dev
-# or
-yarn tauri dev
+npm run tauri:dev
 ```
 
-## Building for Production
+### Tests
 
-### Package the Tauri App
+Backend:
 
 ```bash
+cd backend
+uv run --group dev pytest
+```
+
+Frontend production build:
+
+```bash
+cd frontend
 npm run build
-npm run tauri build
-# or
-yarn build
-yarn tauri build
 ```
-
-This will create distributable packages in the `dist` folder for your platform.
 
 ## Project Structure
 
-```
-arXiv-sage/
-├── backend/               # FastAPI backend
-│   ├── pdfs/              # arXiv PDFs storage
-│   ├── services/          # Business logic
-│   │   ├── arxiv.py       # arXiv API integration
-│   │   ├── pdf.py         # PDF processing
-│   │   └── summarizer.py  # DeepSeek API integration
-│   ├── binary_main.py     # pyinstaller binary for Tauri
-│   ├── main.py            # Main FastAPI application
-│   └── requirements.txt   # Python dependencies
-├── frontend/              # Next.js + Electron frontend
-│   ├── public/            # Static assets
-|   ├── src/
-│   |   ├── app/           # Next.js app configuration
-│   |   ├── components/    # Next.js components
-│   |   ├── hooks/         # Next.js hooks
-│   ├── src-tauri/         # Tauri configuration
-│   |   ├── binaries/      # FastAPI sidecar binary
-│   |   ├── capabilities/  # Permissions for sidecar
-│   |   ├── gen/           # Schema for Tauri API
-│   |   ├── icons/         # Default tauri icons
-│   |   ├── pdfs/          # Pdf storage
-│   |   ├── src/           # Tauri app entry point
-│   |   ├── Cargo.toml     # Tauri dependencies
-│   |   ├── build.rs       # Tauri build script
-│   |   ├── tauri.conf.json# Tauri configuration
-│   └── package.json       # Node.js dependencies
-└── README.md              # Project documentation
+```text
+Sage/
+├── backend/                 # FastAPI backend and local knowledge agent services
+│   ├── api/                 # Chat, knowledge, skills, Tomes, and related routes
+│   ├── providers/           # LLM provider abstraction
+│   ├── services/            # Legacy research/PDF services and shared helpers
+│   ├── skills/              # Backend skill registry and built-in skills
+│   ├── store/               # Local knowledge/session data models and SQLite store
+│   ├── pyproject.toml       # uv-managed backend dependencies
+│   └── main.py              # FastAPI application entry point
+├── frontend/                # Next.js + Tauri frontend
+│   ├── src/app/             # Next.js app shell
+│   ├── src/components/      # Ethereal Console UI components
+│   ├── src/lib/             # Typed API client and frontend utilities
+│   └── src-tauri/           # Tauri desktop configuration
+├── designs/                 # Design references and generated visual artifacts
+├── *.md                     # Product, design, agent, and implementation docs
+└── README.md
 ```
 
-## Future Extensions
+## Near-Term Roadmap
 
-- Local ML model integration for offline summarization
-- Custom summarization styles (academic, ELI5, etc.)
-- Citation extraction and management
-- Collaborative features for research teams
+- Finish replacing old pre-Ethereal UI paths with the Ethereal Console components.
+- Make Tomes first-class across upload, chat, retrieval, history, and generated artifacts.
+- Improve report rendering and exports, likely moving toward an HTML-friendly artifact model.
+- Add explicit schema migrations for existing local Sage databases.
+- Expand evaluation coverage for retrieval quality, grounding, and generated artifact correctness.
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions are welcome. Smaller PRs are much easier to review and merge than large parallel rewrites. Good contribution slices include focused backend endpoints, one UI surface at a time, tests for existing behavior, schema migrations, and documentation updates.
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the MIT License. See `LICENSE` for details.
