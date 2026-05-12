@@ -70,7 +70,7 @@ app.add_middleware(
 )
 
 # Initialize services
-arxiv_service = ArxivService()
+arxiv_service = _get_arxiv_service()
 
 # Thread pool for parallel processing
 executor = ThreadPoolExecutor(max_workers=5)
