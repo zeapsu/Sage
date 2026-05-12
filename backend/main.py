@@ -24,7 +24,7 @@ def _get_arxiv_service():
 from services.pdf import PDFService
 from services.summarizer import DeepSeekService
 
-from api import chat, knowledge, skills as skills_api, tomes as tomes_api
+from api import audio, chat, generate, knowledge, skills as skills_api, tomes as tomes_api
 from config import SageConfig
 from skills.read_document import ReadDocumentSkill
 from skills.registry import SkillRegistry
@@ -57,6 +57,8 @@ app.include_router(knowledge.router)
 app.include_router(chat.router)
 app.include_router(tomes_api.router)
 app.include_router(skills_api.router)
+app.include_router(generate.router)
+app.include_router(audio.router)
 # --- end Sage setup ---
 
 # Add CORS middleware with configurable origins
@@ -70,7 +72,7 @@ app.add_middleware(
 )
 
 # Initialize services
-arxiv_service = ArxivService()
+arxiv_service = _get_arxiv_service()
 
 # Thread pool for parallel processing
 executor = ThreadPoolExecutor(max_workers=5)
@@ -306,6 +308,15 @@ def download_and_extract(paper_id: str):
 @app.get("/")
 def read_root():
     return {"message": "Welcome to the Sage API!"}
+
+
+@app.get("/api/config")
+def get_config(config: SageConfig = Depends()):
+    """Expose the active provider/model so the UI can label which one's in use."""
+    provider_name = config.get("providers.default", "ollama")
+    provider_config = config.provider_config(provider_name)
+    model = provider_config.get("default_model", "")
+    return {"provider": provider_name, "model": model}
 
 
 # Clear caches endpoint (for maintenance)
