@@ -112,6 +112,17 @@ async function apiFetch<T>(path: string, opts: FetchOpts = {}): Promise<T> {
   return res.json();
 }
 
+// ── Config ──
+
+export interface SageRuntimeConfig {
+  provider: string;
+  model: string;
+}
+
+export async function getRuntimeConfig(): Promise<SageRuntimeConfig> {
+  return apiFetch<SageRuntimeConfig>("/api/config");
+}
+
 // ── Tomes ──
 
 export interface Tome {
@@ -181,6 +192,42 @@ export async function ingestDocument(
   });
 }
 
+export interface DocumentSummary {
+  id: string;
+  title: string;
+  source: string;
+  doc_type: string;
+  content_hash: string;
+  created_at: string;
+}
+
+export interface DocumentDetail extends DocumentSummary {
+  chunks: number;
+  content_preview: string;
+  tomes: { id: string; name: string }[];
+}
+
+export async function listDocuments(
+  opts: { limit?: number; offset?: number } = {},
+): Promise<DocumentSummary[]> {
+  const params = new URLSearchParams();
+  if (opts.limit !== undefined) params.set("limit", String(opts.limit));
+  if (opts.offset !== undefined) params.set("offset", String(opts.offset));
+  const qs = params.toString();
+  const data = await apiFetch<{ documents: DocumentSummary[] }>(
+    `/api/knowledge/documents${qs ? `?${qs}` : ""}`,
+  );
+  return data.documents;
+}
+
+export async function getDocument(docId: string): Promise<DocumentDetail> {
+  return apiFetch<DocumentDetail>(`/api/knowledge/documents/${docId}`);
+}
+
+export async function deleteDocument(docId: string): Promise<void> {
+  await apiFetch(`/api/knowledge/documents/${docId}`, { method: "DELETE" });
+}
+
 export async function searchKnowledge(
   query: string, opts: { maxResults?: number; tomeId?: string } = {},
 ): Promise<{ results: unknown[]; formatted: string }> {
@@ -192,6 +239,175 @@ export async function searchKnowledge(
       tome_id: opts.tomeId ?? null,
     },
   });
+}
+
+// ── Chat sessions / history ──
+
+export interface ChatSessionSummary {
+  id: string;
+  tome_id: string | null;
+  tome_name: string | null;
+  provider: string;
+  model: string;
+  created_at: string;
+  last_message_at: string;
+  first_user_message: string | null;
+  message_count: number;
+}
+
+export async function listChatSessions(limit = 100): Promise<ChatSessionSummary[]> {
+  const data = await apiFetch<{ sessions: ChatSessionSummary[] }>(
+    `/api/chat/sessions?limit=${limit}`,
+  );
+  return data.sessions;
+}
+
+// ── Generation: flashcards & quizzes ──
+
+export interface GeneratedFlashcard {
+  id: string;
+  front: string;
+  back: string;
+}
+
+export interface GeneratedSource {
+  document_id: string;
+  document_title: string;
+  chunk_index: number;
+  similarity: number | null;
+}
+
+export interface FlashcardGeneration {
+  cards: GeneratedFlashcard[];
+  topic: string;
+  sources: GeneratedSource[];
+}
+
+export interface GeneratedQuizOption {
+  id: string;
+  text: string;
+}
+
+export interface GeneratedQuizQuestion {
+  id: string;
+  question: string;
+  options: GeneratedQuizOption[];
+  correctOptionId: string;
+  explanation?: string;
+}
+
+export interface QuizGeneration {
+  questions: GeneratedQuizQuestion[];
+  topic: string;
+  sources: GeneratedSource[];
+}
+
+export interface GenerateOpts {
+  topic?: string;
+  tomeId?: string;
+  count?: number;
+  provider?: string;
+  model?: string;
+}
+
+function generateBody(opts: GenerateOpts) {
+  return {
+    topic: opts.topic ?? null,
+    tome_id: opts.tomeId ?? null,
+    count: opts.count ?? 6,
+    provider: opts.provider ?? null,
+    model: opts.model ?? null,
+  };
+}
+
+export async function generateFlashcards(opts: GenerateOpts = {}): Promise<FlashcardGeneration> {
+  return apiFetch<FlashcardGeneration>("/api/generate/flashcards", {
+    method: "POST",
+    body: generateBody(opts),
+  });
+}
+
+export async function generateQuiz(opts: GenerateOpts = {}): Promise<QuizGeneration> {
+  return apiFetch<QuizGeneration>("/api/generate/quiz", {
+    method: "POST",
+    body: generateBody(opts),
+  });
+}
+
+// ── Generation: reports ──
+
+export interface ReportTocItem {
+  id: string;
+  title: string;
+}
+
+export interface ReportGeneration {
+  title: string;
+  subtitle: string | null;
+  sourceDocs: string | null;
+  toc: ReportTocItem[];
+  content: string;
+  sources: GeneratedSource[];
+  topic: string;
+}
+
+export async function generateReport(opts: GenerateOpts = {}): Promise<ReportGeneration> {
+  return apiFetch<ReportGeneration>("/api/generate/report", {
+    method: "POST",
+    body: generateBody(opts),
+  });
+}
+
+// ── Generation: audio narration ──
+
+export interface AudioSegment {
+  id: string;
+  text: string;
+  startTime: number;
+  endTime: number;
+}
+
+export interface AudioGeneration {
+  id: string;
+  title: string;
+  voice: string;
+  provider: string;
+  model: string;
+  script: string;
+  segments: AudioSegment[];
+  duration: number;
+  /** Backend-relative URL to an MP3 (OpenAI TTS). When null, the frontend
+   *  falls back to browser SpeechSynthesis for playback. */
+  audio_url: string | null;
+  sources: GeneratedSource[];
+  topic: string;
+}
+
+export interface GenerateAudioOpts {
+  topic?: string;
+  tomeId?: string;
+  voice?: string;
+  provider?: string;
+  model?: string;
+}
+
+export async function generateAudio(opts: GenerateAudioOpts = {}): Promise<AudioGeneration> {
+  return apiFetch<AudioGeneration>("/api/generate/audio", {
+    method: "POST",
+    body: {
+      topic: opts.topic ?? null,
+      tome_id: opts.tomeId ?? null,
+      voice: opts.voice ?? null,
+      provider: opts.provider ?? null,
+      model: opts.model ?? null,
+    },
+  });
+}
+
+/** Resolve a relative audio path to a fully-qualified URL using the active API base. */
+export function resolveAudioUrl(path: string): string {
+  if (/^https?:/i.test(path)) return path;
+  return `${getApiBaseUrl()}${path.startsWith("/") ? "" : "/"}${path}`;
 }
 
 // ── Chat ──
