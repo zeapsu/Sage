@@ -1,0 +1,617 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sage Tome Dashboard Proposal</title>
+  <style>
+    :root {
+      --surface-container-lowest: #0e0e0e;
+      --surface-container-low: #1c1b1b;
+      --surface: #131313;
+      --surface-container: #201f1f;
+      --surface-container-high: #2a2a2a;
+      --surface-container-highest: #353534;
+      --surface-bright: #3a3939;
+      --primary: #adc6ff;
+      --primary-container: #4d8eff;
+      --on-primary: #002e6a;
+      --on-surface: #e5e2e1;
+      --on-surface-variant: #c2c6d6;
+      --outline: #8c909f;
+      --outline-variant: #424754;
+      --tertiary: #ffb786;
+      --success: #9bd67f;
+      --warn: #ffd073;
+      --danger: #ffb4ab;
+      --radius-sm: 8px;
+      --radius-md: 16px;
+      --radius-lg: 32px;
+      --shadow: 0 8px 32px rgba(0,0,0,.42), 0 0 60px rgba(173,198,255,.04);
+      --font: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    html { color-scheme: dark; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--on-surface);
+      background:
+        radial-gradient(900px 260px at 50% 4%, rgba(173,198,255,.10), transparent 62%),
+        radial-gradient(620px 320px at 15% 35%, rgba(255,183,134,.04), transparent 72%),
+        var(--surface-container-lowest);
+      font-family: var(--font);
+      -webkit-font-smoothing: antialiased;
+      line-height: 1.5;
+    }
+
+    button, input { font: inherit; }
+    button { cursor: pointer; }
+    .shell {
+      display: grid;
+      grid-template-columns: 360px minmax(760px, 1fr);
+      gap: 24px;
+      width: min(1480px, calc(100vw - 48px));
+      margin: 0 auto;
+      padding: 28px 0 48px;
+    }
+
+    .proposal {
+      position: sticky;
+      top: 24px;
+      height: calc(100vh - 48px);
+      overflow: auto;
+      padding: 22px;
+      border-radius: 28px;
+      background: color-mix(in srgb, var(--surface) 82%, transparent);
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(66,71,84,.15);
+      backdrop-filter: blur(32px);
+    }
+    .proposal h1 {
+      margin: 0 0 8px;
+      font-size: 28px;
+      letter-spacing: -.04em;
+      line-height: 1.05;
+    }
+    .proposal h2 {
+      margin: 26px 0 8px;
+      font-size: 13px;
+      text-transform: uppercase;
+      color: var(--primary);
+      letter-spacing: .11em;
+    }
+    .proposal p, .proposal li {
+      color: rgba(194,198,214,.82);
+      font-size: 14px;
+    }
+    .proposal ul { padding-left: 18px; margin: 8px 0 0; }
+    .tagline {
+      font-size: 15px;
+      color: var(--on-surface-variant);
+      margin: 0 0 18px;
+    }
+    .principle {
+      background: rgba(173,198,255,.08);
+      border: 1px solid rgba(173,198,255,.16);
+      border-radius: 18px;
+      padding: 14px;
+      color: var(--on-surface);
+      margin: 14px 0;
+    }
+    .kbd {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 22px;
+      height: 22px;
+      padding: 0 7px;
+      border-radius: 7px;
+      background: var(--surface-container-high);
+      color: var(--on-surface);
+      font-size: 12px;
+      box-shadow: inset 0 0 0 1px rgba(140,144,159,.18);
+    }
+
+    .stage {
+      position: relative;
+      min-height: calc(100vh - 56px);
+      border-radius: 34px;
+      background:
+        radial-gradient(550px 180px at 50% 0%, rgba(173,198,255,.07), transparent 70%),
+        linear-gradient(180deg, rgba(19,19,19,.86), rgba(14,14,14,.96));
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(66,71,84,.13);
+      overflow: hidden;
+    }
+    .stage::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(255,255,255,.018) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.014) 1px, transparent 1px);
+      background-size: 48px 48px;
+      mask-image: radial-gradient(circle at 50% 20%, black, transparent 72%);
+    }
+
+    .top-strip {
+      position: relative;
+      z-index: 3;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 22px 4px;
+      color: rgba(194,198,214,.58);
+      font-size: 12px;
+      letter-spacing: .05em;
+      text-transform: uppercase;
+    }
+    .status-dot { width: 7px; height: 7px; border-radius: 999px; background: var(--success); display: inline-block; margin-right: 8px; box-shadow: 0 0 12px rgba(155,214,127,.45); }
+
+    .prototype {
+      position: relative;
+      z-index: 2;
+      width: min(960px, calc(100% - 48px));
+      margin: 18px auto 36px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 18px;
+    }
+
+    .command-mini {
+      width: min(600px, 100%);
+      height: 48px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 15px 0 16px;
+      background: rgba(19,19,19,.82);
+      border-radius: 999px;
+      border: 1px solid rgba(66,71,84,.20);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(32px);
+      transition: border-color .18s, transform .18s, background .18s;
+    }
+    .command-mini:hover { border-color: rgba(173,198,255,.28); transform: translateY(-1px); background: rgba(19,19,19,.92); }
+    .sparkle { color: var(--primary); font-size: 18px; }
+    .command-placeholder { flex: 1; color: rgba(194,198,214,.58); font-size: 14px; }
+    .provider {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      height: 24px;
+      padding: 0 10px;
+      border-radius: 999px;
+      background: var(--surface-container-high);
+      color: var(--on-surface-variant);
+      font-size: 11px;
+      letter-spacing: .07em;
+      text-transform: uppercase;
+      box-shadow: inset 0 0 0 1px rgba(66,71,84,.20);
+    }
+
+    .dashboard {
+      width: min(900px, 100%);
+      border-radius: 28px;
+      background: rgba(19,19,19,.82);
+      border: 1px solid rgba(66,71,84,.18);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(32px);
+      overflow: hidden;
+      animation: floatIn .42s cubic-bezier(.25,.46,.45,.94) both;
+    }
+    @keyframes floatIn { from { opacity: 0; transform: translateY(14px) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+    .dash-hero {
+      padding: 24px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 18px;
+      background: linear-gradient(180deg, rgba(32,31,31,.94), rgba(19,19,19,.52));
+    }
+    .crumb { color: rgba(194,198,214,.55); font-size: 12px; text-transform: uppercase; letter-spacing: .09em; margin-bottom: 6px; }
+    .dash-title { margin: 0; font-size: 28px; line-height: 1.1; letter-spacing: -.035em; }
+    .dash-sub { margin: 8px 0 0; color: rgba(194,198,214,.78); font-size: 14px; max-width: 560px; }
+    .hero-actions { display: flex; gap: 8px; align-items: start; flex-wrap: wrap; justify-content: end; }
+    .pill-btn {
+      min-height: 34px;
+      padding: 0 13px;
+      border-radius: 999px;
+      border: 1px solid rgba(66,71,84,.20);
+      background: rgba(42,42,42,.70);
+      color: var(--on-surface-variant);
+      transition: transform .14s, background .14s, border-color .14s, color .14s;
+    }
+    .pill-btn:hover, .pill-btn.active { transform: translateY(-1px); background: rgba(173,198,255,.12); border-color: rgba(173,198,255,.24); color: var(--primary); }
+    .pill-btn.primary { background: rgba(173,198,255,.13); color: var(--primary); border-color: rgba(173,198,255,.24); }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      padding: 0 24px 20px;
+    }
+    .metric {
+      padding: 12px;
+      border-radius: 16px;
+      background: rgba(28,27,27,.72);
+      box-shadow: inset 0 0 0 1px rgba(66,71,84,.10);
+    }
+    .metric strong { display: block; font-size: 20px; letter-spacing: -.02em; }
+    .metric span { color: rgba(194,198,214,.58); font-size: 11px; text-transform: uppercase; letter-spacing: .08em; }
+
+    .card-grid {
+      display: grid;
+      grid-template-columns: 1.15fr .85fr;
+      gap: 12px;
+      padding: 0 18px 18px;
+    }
+    .card {
+      min-height: 154px;
+      padding: 17px;
+      border: 0;
+      border-radius: 22px;
+      background: color-mix(in srgb, var(--surface-container) 78%, transparent);
+      box-shadow: inset 0 0 0 1px rgba(66,71,84,.12);
+      color: var(--on-surface);
+      text-align: left;
+      transition: transform .16s, background .16s, box-shadow .16s;
+      position: relative;
+      overflow: hidden;
+    }
+    .card:hover { transform: translateY(-2px); background: color-mix(in srgb, var(--surface-container-high) 76%, transparent); box-shadow: inset 0 0 0 1px rgba(173,198,255,.18), 0 8px 24px rgba(0,0,0,.22); }
+    .wide { grid-column: span 1; min-height: 202px; }
+    .card-head { display: flex; justify-content: space-between; align-items: start; gap: 10px; margin-bottom: 12px; }
+    .card h3 { margin: 0; font-size: 16px; letter-spacing: -.015em; }
+    .card small { color: rgba(194,198,214,.55); font-size: 11px; text-transform: uppercase; letter-spacing: .08em; }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      height: 24px;
+      padding: 0 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      color: var(--primary);
+      background: rgba(173,198,255,.10);
+      box-shadow: inset 0 0 0 1px rgba(173,198,255,.14);
+      white-space: nowrap;
+    }
+    .badge.warn { color: var(--warn); background: rgba(255,208,115,.10); box-shadow: inset 0 0 0 1px rgba(255,208,115,.14); }
+    .badge.good { color: var(--success); background: rgba(155,214,127,.10); box-shadow: inset 0 0 0 1px rgba(155,214,127,.14); }
+    .card p { margin: 0; color: rgba(194,198,214,.74); font-size: 13px; }
+    .action-row { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+    .ghost-action {
+      height: 30px;
+      padding: 0 10px;
+      border-radius: 999px;
+      border: 0;
+      background: rgba(53,53,52,.56);
+      color: rgba(229,226,225,.86);
+      font-size: 12px;
+      transition: background .16s, color .16s;
+    }
+    .ghost-action:hover { background: rgba(173,198,255,.14); color: var(--primary); }
+    .source-list { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+    .source-item { display: flex; align-items: center; gap: 9px; color: rgba(229,226,225,.90); font-size: 13px; }
+    .source-icon { width: 28px; height: 28px; border-radius: 9px; display: grid; place-items: center; background: rgba(173,198,255,.10); color: var(--primary); }
+    .mini-report { padding: 12px; border-radius: 16px; background: rgba(14,14,14,.32); color: rgba(229,226,225,.90); font-size: 13px; }
+    .quote { border-left: 0; margin-top: 10px; color: rgba(194,198,214,.72); font-size: 13px; }
+    .progress { height: 7px; border-radius: 999px; background: rgba(66,71,84,.28); overflow: hidden; margin: 14px 0 8px; }
+    .progress > span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--primary), var(--tertiary)); }
+    .study-split { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+    .study-box { padding: 12px; border-radius: 16px; background: rgba(14,14,14,.28); }
+    .study-box strong { display: block; font-size: 20px; }
+    .study-box span { color: rgba(194,198,214,.58); font-size: 12px; }
+
+    .focus-panel {
+      display: none;
+      width: min(760px, 100%);
+      border-radius: 28px;
+      background: rgba(19,19,19,.90);
+      border: 1px solid rgba(66,71,84,.18);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(32px);
+      overflow: hidden;
+      animation: floatIn .34s cubic-bezier(.25,.46,.45,.94) both;
+    }
+    .focus-panel.visible { display: block; }
+    .focus-header { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 18px 20px; background: rgba(32,31,31,.75); }
+    .focus-header h2 { margin: 0; font-size: 20px; letter-spacing: -.025em; }
+    .focus-body { padding: 20px; }
+    .report-body h3 { margin: 0 0 8px; font-size: 18px; }
+    .report-body p { color: rgba(194,198,214,.78); font-size: 14px; }
+    .table { width: 100%; border-collapse: collapse; margin-top: 14px; border-radius: 14px; overflow: hidden; background: rgba(14,14,14,.28); }
+    .table th, .table td { padding: 10px; text-align: left; font-size: 13px; }
+    .table th { color: var(--primary); background: rgba(173,198,255,.07); font-weight: 600; }
+    .table td { color: rgba(229,226,225,.82); }
+    .option { padding: 13px; border-radius: 15px; background: rgba(32,31,31,.76); margin: 9px 0; color: rgba(229,226,225,.85); box-shadow: inset 0 0 0 1px rgba(66,71,84,.14); }
+    .option.selected { box-shadow: inset 0 0 0 1px rgba(173,198,255,.30); background: rgba(173,198,255,.10); color: var(--primary); }
+    .audio-controls { display: flex; align-items: center; justify-content: center; gap: 14px; margin: 20px 0; }
+    .round { width: 46px; height: 46px; border-radius: 999px; border: 0; background: var(--primary); color: var(--on-primary); font-weight: 800; }
+    .transcript { max-height: 160px; overflow: auto; padding: 14px; border-radius: 16px; background: rgba(14,14,14,.28); color: rgba(194,198,214,.74); font-size: 13px; }
+
+    .command-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      display: none;
+      align-items: flex-start;
+      justify-content: center;
+      padding-top: min(14vh, 120px);
+      background: rgba(0,0,0,.38);
+      backdrop-filter: blur(10px);
+    }
+    .command-overlay.visible { display: flex; animation: fade .18s both; }
+    @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+    .spotlight {
+      width: min(680px, calc(100vw - 32px));
+      border-radius: 26px;
+      background: rgba(19,19,19,.94);
+      border: 1px solid rgba(173,198,255,.20);
+      box-shadow: 0 24px 80px rgba(0,0,0,.65), 0 0 80px rgba(173,198,255,.08);
+      overflow: hidden;
+      animation: spotlightIn .2s cubic-bezier(.25,.46,.45,.94) both;
+    }
+    @keyframes spotlightIn { from { transform: translateY(-12px) scale(.98); opacity: .7; } to { transform: translateY(0) scale(1); opacity: 1; } }
+    .spot-input { height: 58px; display: flex; align-items: center; gap: 13px; padding: 0 18px; }
+    .spot-input input { flex: 1; height: 100%; background: transparent; border: 0; outline: 0; color: var(--on-surface); font-size: 17px; }
+    .spot-list { padding: 8px; border-top: 1px solid rgba(66,71,84,.16); }
+    .spot-row { display: grid; grid-template-columns: 34px 1fr auto; gap: 12px; align-items: center; padding: 10px; border-radius: 15px; color: rgba(229,226,225,.88); }
+    .spot-row:hover, .spot-row.active { background: rgba(173,198,255,.10); color: var(--primary); }
+    .spot-row span:nth-child(2) small { display: block; color: rgba(194,198,214,.55); font-size: 12px; margin-top: 1px; }
+    .hint { color: rgba(194,198,214,.48); font-size: 12px; }
+
+    .mobile-note { display: none; }
+    @media (max-width: 1080px) {
+      .shell { grid-template-columns: 1fr; width: min(960px, calc(100vw - 32px)); }
+      .proposal { position: relative; height: auto; top: 0; }
+      .stage { min-height: auto; }
+    }
+    @media (max-width: 720px) {
+      .metrics { grid-template-columns: repeat(2, 1fr); }
+      .card-grid { grid-template-columns: 1fr; }
+      .dash-hero { grid-template-columns: 1fr; }
+      .hero-actions { justify-content: start; }
+      .provider { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <aside class="proposal">
+      <h1>Dashboard as default, command bar as summonable power tool</h1>
+      <p class="tagline">Proposal for Sage's Tome-centric interaction model.</p>
+
+      <div class="principle">
+        <strong>Great Sage thesis:</strong> the Dashboard handles common intent. The floating command bar handles expressive intent. Focus views handle deep work.
+      </div>
+
+      <h2>Answer to the command bar question</h2>
+      <p>Yes, the command bar becomes secondary in the default flow, but not less important. It should function like macOS Spotlight or Raycast: summonable with a key command, always Tome-aware, and optimized for actions that are too specific for fixed buttons.</p>
+      <p>In normal use, the selected Tome opens to Dashboard. Press <span class="kbd">⌘</span> <span class="kbd">K</span> or click the small bar to invoke natural language and command search.</p>
+
+      <h2>Three-layer model</h2>
+      <ul>
+        <li><strong>TomeSelector:</strong> choose the knowledge scope.</li>
+        <li><strong>Dashboard:</strong> glanceable, directly clickable overview of all common Tome workflows.</li>
+        <li><strong>Focus view:</strong> one expanded component for chat, report, quiz, flashcards, audio, or sources.</li>
+      </ul>
+
+      <h2>Dashboard job</h2>
+      <p>Dashboard should not auto-generate everything. It should show what exists, what is missing, what is stale, and what can be opened or generated with one click.</p>
+
+      <h2>Command bar job</h2>
+      <p>The command bar should answer questions like: “make this quiz harder,” “compare the latest report with source 3,” “generate a skeptical panel discussion,” or “find contradictions across these papers.”</p>
+
+      <h2>Try the prototype</h2>
+      <ul>
+        <li>Click Dashboard cards to switch focus views.</li>
+        <li>Click the compact command bar or press <span class="kbd">⌘</span>/<span class="kbd">Ctrl</span> + <span class="kbd">K</span>.</li>
+        <li>Use the quick-action pills to see how common actions stay visible without natural language.</li>
+      </ul>
+    </aside>
+
+    <main class="stage">
+      <div class="top-strip">
+        <span><span class="status-dot"></span>Tome active</span>
+        <span>Dashboard mode · command bar available</span>
+      </div>
+
+      <section class="prototype">
+        <button class="command-mini" id="openCommand" aria-label="Open command bar">
+          <span class="sparkle">✦</span>
+          <span class="command-placeholder">Ask or command within “Weak Measurement in BECs”...</span>
+          <span class="provider">⚡ GPT-4o</span>
+          <span class="hint">⌘K</span>
+        </button>
+
+        <section class="dashboard" id="dashboard">
+          <div class="dash-hero">
+            <div>
+              <div class="crumb">Tome Dashboard</div>
+              <h1 class="dash-title">Weak Measurement in BECs</h1>
+              <p class="dash-sub">A focused workspace for stochastic Gross-Pitaevskii dynamics, TSSP methods, and weak-measurement models. Dashboard is the default view. Natural language is optional, not mandatory.</p>
+            </div>
+            <div class="hero-actions">
+              <button class="pill-btn primary" data-focus="chat">Ask</button>
+              <button class="pill-btn" data-focus="report">Report</button>
+              <button class="pill-btn" data-focus="quiz">Quiz</button>
+              <button class="pill-btn" data-focus="audio">Audio</button>
+            </div>
+          </div>
+
+          <div class="metrics">
+            <div class="metric"><strong>12</strong><span>sources</span></div>
+            <div class="metric"><strong>884</strong><span>chunks</span></div>
+            <div class="metric"><strong>4</strong><span>sessions</span></div>
+            <div class="metric"><strong>3</strong><span>stale artifacts</span></div>
+          </div>
+
+          <div class="card-grid">
+            <button class="card wide" data-focus="sources">
+              <div class="card-head"><div><small>Grounding</small><h3>Sources</h3></div><span class="badge good">Current</span></div>
+              <p>12 documents are active in this Tome. New source additions should mark report, quiz, and audio as stale until regenerated.</p>
+              <div class="source-list">
+                <div class="source-item"><span class="source-icon">pdf</span> Stochastic projected Gross-Pitaevskii equation review</div>
+                <div class="source-item"><span class="source-icon">md</span> TSSP weak measurement notes</div>
+                <div class="source-item"><span class="source-icon">url</span> Numerical methods comparison</div>
+              </div>
+              <div class="action-row"><span class="ghost-action">Manage sources</span><span class="ghost-action">Upload</span></div>
+            </button>
+
+            <button class="card" data-focus="chat">
+              <div class="card-head"><div><small>Recent thread</small><h3>Chat</h3></div><span class="badge">Resume</span></div>
+              <p>Last question: “How does weak measurement change the stochastic noise term?”</p>
+              <p class="quote">Answer preview: measurement backaction appears as a conditioned update...</p>
+              <div class="action-row"><span class="ghost-action">Continue</span></div>
+            </button>
+
+            <button class="card" data-focus="report">
+              <div class="card-head"><div><small>Synthesis artifact</small><h3>Report</h3></div><span class="badge warn">Stale</span></div>
+              <div class="mini-report">Latest report covers 9/12 current sources. HTML-first export could preserve tables, citations, and layout better than Markdown alone.</div>
+              <div class="action-row"><span class="ghost-action">Open</span><span class="ghost-action">Regenerate</span><span class="ghost-action">Export</span></div>
+            </button>
+
+            <button class="card" data-focus="quiz">
+              <div class="card-head"><div><small>Study loop</small><h3>Quiz</h3></div><span class="badge">82% last score</span></div>
+              <p>Five-question check generated from core source chunks. Three new sources were added since the last run.</p>
+              <div class="progress"><span style="width:82%"></span></div>
+              <div class="action-row"><span class="ghost-action">Start quiz</span><span class="ghost-action">Regenerate harder</span></div>
+            </button>
+
+            <button class="card" data-focus="flashcards">
+              <div class="card-head"><div><small>Review deck</small><h3>Flashcards</h3></div><span class="badge good">38 cards</span></div>
+              <div class="study-split">
+                <div class="study-box"><strong>14</strong><span>due today</span></div>
+                <div class="study-box"><strong>6</strong><span>need source refresh</span></div>
+              </div>
+              <div class="action-row"><span class="ghost-action">Review</span><span class="ghost-action">Add from new sources</span></div>
+            </button>
+
+            <button class="card" data-focus="audio">
+              <div class="card-head"><div><small>Listen mode</small><h3>Audio Review</h3></div><span class="badge warn">Missing</span></div>
+              <p>No audio review exists for the current source set. Future option: single narrator, two-person explainer, or panel discussion.</p>
+              <div class="action-row"><span class="ghost-action">Generate audio</span><span class="ghost-action">Panel mode later</span></div>
+            </button>
+          </div>
+        </section>
+
+        <section class="focus-panel" id="focusPanel" aria-live="polite">
+          <div class="focus-header">
+            <h2 id="focusTitle">Focused View</h2>
+            <button class="pill-btn" id="backDashboard">← Dashboard</button>
+          </div>
+          <div class="focus-body" id="focusBody"></div>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <div class="command-overlay" id="commandOverlay" role="dialog" aria-modal="true" aria-label="Command bar">
+    <div class="spotlight">
+      <div class="spot-input">
+        <span class="sparkle">✦</span>
+        <input id="spotInput" value="" placeholder="Ask, search, or run a Tome action..." />
+        <span class="hint">Esc</span>
+      </div>
+      <div class="spot-list">
+        <div class="spot-row active" data-focus="report"><span>⌘</span><span>Regenerate stale report<small>Uses all 12 current sources in this Tome</small></span><span class="hint">Enter</span></div>
+        <div class="spot-row" data-focus="quiz"><span>?</span><span>Make a harder quiz<small>Five questions, higher difficulty, cite source chunks</small></span><span></span></div>
+        <div class="spot-row" data-focus="audio"><span>♪</span><span>Draft a two-person audio review<small>Experimental command, still grounded in Tome sources</small></span><span></span></div>
+        <div class="spot-row" data-focus="sources"><span>＋</span><span>Upload new source<small>Attach a PDF, Markdown note, or pasted text</small></span><span></span></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const dashboard = document.getElementById('dashboard');
+    const focusPanel = document.getElementById('focusPanel');
+    const focusTitle = document.getElementById('focusTitle');
+    const focusBody = document.getElementById('focusBody');
+    const overlay = document.getElementById('commandOverlay');
+    const spotInput = document.getElementById('spotInput');
+
+    const views = {
+      sources: {
+        title: 'Sources Focus View',
+        body: `<p>This is where the full source manager would live. Dashboard showed the source summary, but focus mode is for upload, delete, tome assignment, and source inspection.</p>
+        <div class="source-list">
+          <div class="source-item"><span class="source-icon">pdf</span> SPGPE review · 142 chunks · included in report</div>
+          <div class="source-item"><span class="source-icon">md</span> TSSP notes · 63 chunks · added after latest quiz</div>
+          <div class="source-item"><span class="source-icon">url</span> Numerical methods comparison · 41 chunks · not yet in audio</div>
+        </div>
+        <div class="action-row"><button class="ghost-action">Upload source</button><button class="ghost-action">Re-index Tome</button></div>`
+      },
+      chat: {
+        title: 'Chat Focus View',
+        body: `<p><strong>User:</strong> How does weak measurement change the stochastic noise term?</p>
+        <p><strong>Sage:</strong> In a conditioned evolution, the measurement record updates the state estimate, while backaction modifies the stochastic term. The dashboard keeps this thread resumable without requiring the user to retype context.</p>
+        <div class="action-row"><button class="ghost-action">Ask follow-up</button><button class="ghost-action">Turn answer into flashcards</button></div>`
+      },
+      report: {
+        title: 'Report Focus View',
+        body: `<div class="report-body"><h3>Weak Measurement and sGPE Dynamics</h3>
+        <p>The focused report view can be a full reading surface with table rendering, source anchors, export controls, and eventually an HTML-first artifact mode.</p>
+        <table class="table"><thead><tr><th>Artifact</th><th>Source coverage</th><th>Status</th></tr></thead><tbody><tr><td>Report</td><td>9 / 12 sources</td><td>Stale</td></tr><tr><td>Markdown export</td><td>Available</td><td>Stable</td></tr><tr><td>HTML export</td><td>Proposed</td><td>Next</td></tr></tbody></table>
+        <div class="action-row"><button class="ghost-action">Regenerate</button><button class="ghost-action">Export HTML</button><button class="ghost-action">Export MD</button></div></div>`
+      },
+      quiz: {
+        title: 'Quiz Focus View',
+        body: `<p><strong>Question 1 / 5</strong></p><p>What role does measurement backaction play in conditioned stochastic dynamics?</p>
+        <div class="option">It removes the stochastic term entirely.</div><div class="option selected">It updates the state estimate based on the measurement record.</div><div class="option">It makes all trajectories deterministic.</div>
+        <div class="action-row"><button class="ghost-action">Confirm</button><button class="ghost-action">Skip</button></div>`
+      },
+      flashcards: {
+        title: 'Flashcards Focus View',
+        body: `<p>Dashboard shows deck readiness. Focus mode is where the actual flip-card study session happens.</p>
+        <div class="mini-report" style="min-height:140px;display:grid;place-items:center;text-align:center;font-size:16px;">What is the difference between ensemble noise and measurement backaction?</div>
+        <div class="action-row"><button class="ghost-action">Flip</button><button class="ghost-action">Next</button><button class="ghost-action">Shuffle</button></div>`
+      },
+      audio: {
+        title: 'Audio Focus View',
+        body: `<p>Audio should be generated from selected Tome sources, not freeform podcast improv.</p>
+        <div class="audio-controls"><button class="ghost-action">−15s</button><button class="round">▶</button><button class="ghost-action">+15s</button></div>
+        <div class="progress"><span style="width:34%"></span></div>
+        <div class="transcript">Transcript preview: Today we are looking at how weak measurement changes the effective stochastic evolution of a Bose-Einstein condensate...</div>`
+      }
+    };
+
+    function showFocus(name) {
+      const view = views[name] || views.chat;
+      focusTitle.textContent = view.title;
+      focusBody.innerHTML = view.body;
+      dashboard.style.display = 'none';
+      focusPanel.classList.add('visible');
+      overlay.classList.remove('visible');
+    }
+    function showDashboard() {
+      focusPanel.classList.remove('visible');
+      dashboard.style.display = 'block';
+    }
+    function openCommand() {
+      overlay.classList.add('visible');
+      setTimeout(() => spotInput.focus(), 40);
+    }
+    function closeCommand() { overlay.classList.remove('visible'); }
+
+    document.querySelectorAll('[data-focus]').forEach(el => {
+      el.addEventListener('click', (e) => {
+        const focus = e.currentTarget.getAttribute('data-focus');
+        showFocus(focus);
+      });
+    });
+    document.getElementById('backDashboard').addEventListener('click', showDashboard);
+    document.getElementById('openCommand').addEventListener('click', openCommand);
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) closeCommand(); });
+    document.addEventListener('keydown', (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); openCommand(); }
+      if (e.key === 'Escape') closeCommand();
+      if (e.key === 'Enter' && overlay.classList.contains('visible')) { showFocus('report'); }
+    });
+  </script>
+</body>
+</html>
