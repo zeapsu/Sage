@@ -244,14 +244,28 @@
     .metric strong { display: block; font-size: 20px; letter-spacing: -.02em; }
     .metric span { color: rgba(194,198,214,.58); font-size: 11px; text-transform: uppercase; letter-spacing: .08em; }
 
+    .layout-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 0 24px 16px;
+      color: rgba(194,198,214,.62);
+      font-size: 12px;
+    }
+    .layout-toolbar strong { color: var(--on-surface); font-weight: 600; }
     .card-grid {
+      --cell: 92px;
       display: grid;
-      grid-template-columns: 1.15fr .85fr;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      grid-auto-rows: var(--cell);
+      grid-auto-flow: dense;
       gap: 12px;
       padding: 0 18px 18px;
+      min-height: 520px;
     }
     .card {
-      min-height: 154px;
+      min-height: 0;
       padding: 17px;
       border: 0;
       border-radius: 22px;
@@ -259,12 +273,58 @@
       box-shadow: inset 0 0 0 1px rgba(66,71,84,.12);
       color: var(--on-surface);
       text-align: left;
-      transition: transform .16s, background .16s, box-shadow .16s;
+      transition: transform .16s, background .16s, box-shadow .16s, opacity .16s;
       position: relative;
       overflow: hidden;
+      grid-column: span var(--col-span, 2);
+      grid-row: span var(--row-span, 2);
+      user-select: none;
     }
     .card:hover { transform: translateY(-2px); background: color-mix(in srgb, var(--surface-container-high) 76%, transparent); box-shadow: inset 0 0 0 1px rgba(173,198,255,.18), 0 8px 24px rgba(0,0,0,.22); }
-    .wide { grid-column: span 1; min-height: 202px; }
+    .card.is-dragging { opacity: .38; transform: scale(.985); }
+    .card.drag-over { box-shadow: inset 0 0 0 1px rgba(173,198,255,.38), 0 0 0 4px rgba(173,198,255,.08); }
+    .card.is-resizing { box-shadow: inset 0 0 0 1px rgba(255,183,134,.42), 0 0 0 4px rgba(255,183,134,.08); }
+    .card.compact .source-list, .card.compact .quote, .card.compact .study-split { display: none; }
+    .card.compact .action-row { margin-top: 10px; }
+    .card.wide { --col-span: 3; --row-span: 2; }
+    .drag-handle {
+      position: absolute;
+      right: 44px;
+      top: 12px;
+      width: 26px;
+      height: 26px;
+      display: grid;
+      place-items: center;
+      border-radius: 9px;
+      color: rgba(194,198,214,.42);
+      background: rgba(14,14,14,.18);
+      cursor: grab;
+      z-index: 2;
+    }
+    .drag-handle:active { cursor: grabbing; }
+    .resize-grip {
+      position: absolute;
+      right: 10px;
+      bottom: 10px;
+      width: 22px;
+      height: 22px;
+      border: 0;
+      border-radius: 8px;
+      background: linear-gradient(135deg, transparent 46%, rgba(173,198,255,.45) 48%, rgba(173,198,255,.45) 56%, transparent 58%),
+                  linear-gradient(135deg, transparent 62%, rgba(173,198,255,.28) 64%, rgba(173,198,255,.28) 72%, transparent 74%);
+      cursor: nwse-resize;
+      opacity: .72;
+      z-index: 2;
+    }
+    .resize-readout {
+      position: absolute;
+      right: 40px;
+      bottom: 12px;
+      color: rgba(194,198,214,.44);
+      font-size: 10px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
     .card-head { display: flex; justify-content: space-between; align-items: start; gap: 10px; margin-bottom: 12px; }
     .card h3 { margin: 0; font-size: 16px; letter-spacing: -.015em; }
     .card small { color: rgba(194,198,214,.55); font-size: 11px; text-transform: uppercase; letter-spacing: .08em; }
@@ -373,7 +433,9 @@
     }
     @media (max-width: 720px) {
       .metrics { grid-template-columns: repeat(2, 1fr); }
-      .card-grid { grid-template-columns: 1fr; }
+      .card-grid { grid-template-columns: 1fr; grid-auto-rows: minmax(120px, auto); }
+      .card { grid-column: span 1 !important; grid-row: span 2; }
+      .drag-handle, .resize-grip, .resize-readout, .layout-toolbar { display: none; }
       .dash-hero { grid-template-columns: 1fr; }
       .hero-actions { justify-content: start; }
       .provider { display: none; }
@@ -409,9 +471,11 @@
 
       <h2>Try the prototype</h2>
       <ul>
-        <li>Click Dashboard cards to switch focus views.</li>
+        <li>Drag a card by its handle to rearrange the Dashboard.</li>
+        <li>Drag the corner grip to resize a card across the responsive grid.</li>
+        <li>Click card content to switch focus views.</li>
         <li>Click the compact command bar or press <span class="kbd">⌘</span>/<span class="kbd">Ctrl</span> + <span class="kbd">K</span>.</li>
-        <li>Use the quick-action pills to see how common actions stay visible without natural language.</li>
+        <li>Use Reset layout to return to the Great Sage default.</li>
       </ul>
     </aside>
 
@@ -451,8 +515,16 @@
             <div class="metric"><strong>3</strong><span>stale artifacts</span></div>
           </div>
 
-          <div class="card-grid">
-            <button class="card wide" data-focus="sources">
+          <div class="layout-toolbar">
+            <span><strong>Customizable canvas</strong> · drag handles move cards, corner grips resize them</span>
+            <button class="pill-btn" id="resetLayout" type="button">Reset layout</button>
+          </div>
+
+          <div class="card-grid" id="dashboardGrid">
+            <article class="card wide" data-widget="sources" data-focus="sources" tabindex="0" role="button" style="--col-span: 3; --row-span: 3;">
+              <span class="drag-handle" draggable="true" aria-label="Move Sources card">⋮⋮</span>
+              <span class="resize-readout">3×3</span>
+              <span class="resize-grip" aria-hidden="true"></span>
               <div class="card-head"><div><small>Grounding</small><h3>Sources</h3></div><span class="badge good">Current</span></div>
               <p>12 documents are active in this Tome. New source additions should mark report, quiz, and audio as stale until regenerated.</p>
               <div class="source-list">
@@ -461,42 +533,57 @@
                 <div class="source-item"><span class="source-icon">url</span> Numerical methods comparison</div>
               </div>
               <div class="action-row"><span class="ghost-action">Manage sources</span><span class="ghost-action">Upload</span></div>
-            </button>
+            </article>
 
-            <button class="card" data-focus="chat">
+            <article class="card" data-widget="chat" data-focus="chat" tabindex="0" role="button" style="--col-span: 1; --row-span: 2;">
+              <span class="drag-handle" draggable="true" aria-label="Move Chat card">⋮⋮</span>
+              <span class="resize-readout">1×2</span>
+              <span class="resize-grip" aria-hidden="true"></span>
               <div class="card-head"><div><small>Recent thread</small><h3>Chat</h3></div><span class="badge">Resume</span></div>
               <p>Last question: “How does weak measurement change the stochastic noise term?”</p>
               <p class="quote">Answer preview: measurement backaction appears as a conditioned update...</p>
               <div class="action-row"><span class="ghost-action">Continue</span></div>
-            </button>
+            </article>
 
-            <button class="card" data-focus="report">
+            <article class="card" data-widget="report" data-focus="report" tabindex="0" role="button" style="--col-span: 2; --row-span: 2;">
+              <span class="drag-handle" draggable="true" aria-label="Move Report card">⋮⋮</span>
+              <span class="resize-readout">2×2</span>
+              <span class="resize-grip" aria-hidden="true"></span>
               <div class="card-head"><div><small>Synthesis artifact</small><h3>Report</h3></div><span class="badge warn">Stale</span></div>
               <div class="mini-report">Latest report covers 9/12 current sources. HTML-first export could preserve tables, citations, and layout better than Markdown alone.</div>
               <div class="action-row"><span class="ghost-action">Open</span><span class="ghost-action">Regenerate</span><span class="ghost-action">Export</span></div>
-            </button>
+            </article>
 
-            <button class="card" data-focus="quiz">
+            <article class="card" data-widget="quiz" data-focus="quiz" tabindex="0" role="button" style="--col-span: 2; --row-span: 2;">
+              <span class="drag-handle" draggable="true" aria-label="Move Quiz card">⋮⋮</span>
+              <span class="resize-readout">2×2</span>
+              <span class="resize-grip" aria-hidden="true"></span>
               <div class="card-head"><div><small>Study loop</small><h3>Quiz</h3></div><span class="badge">82% last score</span></div>
               <p>Five-question check generated from core source chunks. Three new sources were added since the last run.</p>
               <div class="progress"><span style="width:82%"></span></div>
               <div class="action-row"><span class="ghost-action">Start quiz</span><span class="ghost-action">Regenerate harder</span></div>
-            </button>
+            </article>
 
-            <button class="card" data-focus="flashcards">
+            <article class="card" data-widget="flashcards" data-focus="flashcards" tabindex="0" role="button" style="--col-span: 2; --row-span: 2;">
+              <span class="drag-handle" draggable="true" aria-label="Move Flashcards card">⋮⋮</span>
+              <span class="resize-readout">2×2</span>
+              <span class="resize-grip" aria-hidden="true"></span>
               <div class="card-head"><div><small>Review deck</small><h3>Flashcards</h3></div><span class="badge good">38 cards</span></div>
               <div class="study-split">
                 <div class="study-box"><strong>14</strong><span>due today</span></div>
                 <div class="study-box"><strong>6</strong><span>need source refresh</span></div>
               </div>
               <div class="action-row"><span class="ghost-action">Review</span><span class="ghost-action">Add from new sources</span></div>
-            </button>
+            </article>
 
-            <button class="card" data-focus="audio">
+            <article class="card" data-widget="audio" data-focus="audio" tabindex="0" role="button" style="--col-span: 2; --row-span: 2;">
+              <span class="drag-handle" draggable="true" aria-label="Move Audio card">⋮⋮</span>
+              <span class="resize-readout">2×2</span>
+              <span class="resize-grip" aria-hidden="true"></span>
               <div class="card-head"><div><small>Listen mode</small><h3>Audio Review</h3></div><span class="badge warn">Missing</span></div>
               <p>No audio review exists for the current source set. Future option: single narrator, two-person explainer, or panel discussion.</p>
               <div class="action-row"><span class="ghost-action">Generate audio</span><span class="ghost-action">Panel mode later</span></div>
-            </button>
+            </article>
           </div>
         </section>
 
@@ -598,12 +685,144 @@
     }
     function closeCommand() { overlay.classList.remove('visible'); }
 
-    document.querySelectorAll('[data-focus]').forEach(el => {
+    const grid = document.getElementById('dashboardGrid');
+    const resetLayout = document.getElementById('resetLayout');
+    const layoutKey = 'sage-dashboard-layout-v2';
+    let draggedCard = null;
+    let resizing = null;
+
+    const defaults = Array.from(grid.querySelectorAll('.card')).map(card => ({
+      id: card.dataset.widget,
+      col: Number.parseInt(card.style.getPropertyValue('--col-span')) || 2,
+      row: Number.parseInt(card.style.getPropertyValue('--row-span')) || 2,
+    }));
+
+    function updateCardChrome(card) {
+      const col = Number.parseInt(card.style.getPropertyValue('--col-span')) || 2;
+      const row = Number.parseInt(card.style.getPropertyValue('--row-span')) || 2;
+      card.querySelector('.resize-readout').textContent = `${col}×${row}`;
+      card.classList.toggle('compact', col <= 1 || row <= 1);
+    }
+
+    function saveLayout() {
+      const layout = Array.from(grid.querySelectorAll('.card')).map(card => ({
+        id: card.dataset.widget,
+        col: Number.parseInt(card.style.getPropertyValue('--col-span')) || 2,
+        row: Number.parseInt(card.style.getPropertyValue('--row-span')) || 2,
+      }));
+      localStorage.setItem(layoutKey, JSON.stringify(layout));
+    }
+
+    function loadLayout() {
+      const saved = JSON.parse(localStorage.getItem(layoutKey) || 'null');
+      const layout = Array.isArray(saved) ? saved : defaults;
+      layout.forEach(item => {
+        const card = grid.querySelector(`[data-widget="${item.id}"]`);
+        if (!card) return;
+        card.style.setProperty('--col-span', Math.max(1, Math.min(4, item.col || 2)));
+        card.style.setProperty('--row-span', Math.max(1, Math.min(4, item.row || 2)));
+        grid.appendChild(card);
+        updateCardChrome(card);
+      });
+    }
+
+    function resetLayoutToDefault() {
+      localStorage.removeItem(layoutKey);
+      defaults.forEach(item => {
+        const card = grid.querySelector(`[data-widget="${item.id}"]`);
+        card.style.setProperty('--col-span', item.col);
+        card.style.setProperty('--row-span', item.row);
+        grid.appendChild(card);
+        updateCardChrome(card);
+      });
+    }
+
+    grid.querySelectorAll('.card').forEach(card => {
+      const handle = card.querySelector('.drag-handle');
+      const grip = card.querySelector('.resize-grip');
+
+      card.addEventListener('click', (e) => {
+        if (e.target.closest('.drag-handle, .resize-grip, .ghost-action')) return;
+        showFocus(card.dataset.focus);
+      });
+      card.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') showFocus(card.dataset.focus);
+      });
+
+      handle.addEventListener('dragstart', (e) => {
+        draggedCard = card;
+        card.classList.add('is-dragging');
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', card.dataset.widget);
+      });
+      handle.addEventListener('dragend', () => {
+        card.classList.remove('is-dragging');
+        grid.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+        draggedCard = null;
+        saveLayout();
+      });
+      card.addEventListener('dragover', (e) => {
+        if (!draggedCard || draggedCard === card) return;
+        e.preventDefault();
+        card.classList.add('drag-over');
+      });
+      card.addEventListener('dragleave', () => card.classList.remove('drag-over'));
+      card.addEventListener('drop', (e) => {
+        e.preventDefault();
+        card.classList.remove('drag-over');
+        if (!draggedCard || draggedCard === card) return;
+        const cards = Array.from(grid.querySelectorAll('.card'));
+        const from = cards.indexOf(draggedCard);
+        const to = cards.indexOf(card);
+        grid.insertBefore(draggedCard, from < to ? card.nextSibling : card);
+        saveLayout();
+      });
+
+      grip.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const rect = card.getBoundingClientRect();
+        resizing = {
+          card,
+          startX: e.clientX,
+          startY: e.clientY,
+          startCol: Number.parseInt(card.style.getPropertyValue('--col-span')) || 2,
+          startRow: Number.parseInt(card.style.getPropertyValue('--row-span')) || 2,
+          cellW: rect.width / (Number.parseInt(card.style.getPropertyValue('--col-span')) || 2),
+          cellH: rect.height / (Number.parseInt(card.style.getPropertyValue('--row-span')) || 2),
+        };
+        card.classList.add('is-resizing');
+        grip.setPointerCapture(e.pointerId);
+      });
+    });
+
+    document.addEventListener('pointermove', (e) => {
+      if (!resizing) return;
+      const dx = Math.round((e.clientX - resizing.startX) / Math.max(resizing.cellW, 80));
+      const dy = Math.round((e.clientY - resizing.startY) / Math.max(resizing.cellH, 80));
+      const nextCol = Math.max(1, Math.min(4, resizing.startCol + dx));
+      const nextRow = Math.max(1, Math.min(4, resizing.startRow + dy));
+      resizing.card.style.setProperty('--col-span', nextCol);
+      resizing.card.style.setProperty('--row-span', nextRow);
+      updateCardChrome(resizing.card);
+    });
+
+    document.addEventListener('pointerup', () => {
+      if (!resizing) return;
+      resizing.card.classList.remove('is-resizing');
+      saveLayout();
+      resizing = null;
+    });
+
+    document.querySelectorAll('.hero-actions [data-focus], .spot-row[data-focus]').forEach(el => {
       el.addEventListener('click', (e) => {
         const focus = e.currentTarget.getAttribute('data-focus');
         showFocus(focus);
       });
     });
+    resetLayout.addEventListener('click', resetLayoutToDefault);
+    loadLayout();
+
     document.getElementById('backDashboard').addEventListener('click', showDashboard);
     document.getElementById('openCommand').addEventListener('click', openCommand);
     overlay.addEventListener('click', (e) => { if (e.target === overlay) closeCommand(); });
