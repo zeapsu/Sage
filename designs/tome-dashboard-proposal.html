@@ -281,9 +281,20 @@
       user-select: none;
     }
     .card:hover { transform: translateY(-2px); background: color-mix(in srgb, var(--surface-container-high) 76%, transparent); box-shadow: inset 0 0 0 1px rgba(173,198,255,.18), 0 8px 24px rgba(0,0,0,.22); }
-    .card.is-dragging { opacity: .38; transform: scale(.985); }
-    .card.drag-over { box-shadow: inset 0 0 0 1px rgba(173,198,255,.38), 0 0 0 4px rgba(173,198,255,.08); }
+    .card.is-dragging { opacity: .32; transform: scale(.985); }
+    .card.drop-target { box-shadow: inset 0 0 0 1px rgba(173,198,255,.38), 0 0 0 4px rgba(173,198,255,.08); }
     .card.is-resizing { box-shadow: inset 0 0 0 1px rgba(255,183,134,.42), 0 0 0 4px rgba(255,183,134,.08); }
+    .drag-ghost {
+      position: fixed;
+      z-index: 50;
+      pointer-events: none;
+      opacity: .94;
+      transform: translate3d(0,0,0) scale(1.02);
+      box-shadow: 0 22px 70px rgba(0,0,0,.52), 0 0 0 1px rgba(173,198,255,.26), 0 0 80px rgba(173,198,255,.10);
+      filter: saturate(1.08);
+      transition: box-shadow .16s ease, opacity .16s ease;
+    }
+    .grid-settling .card:not(.is-dragging) { will-change: transform; }
     .card.compact .source-list, .card.compact .quote, .card.compact .study-split { display: none; }
     .card.compact .action-row { margin-top: 10px; }
     .card.wide { --col-span: 3; --row-span: 2; }
@@ -471,7 +482,7 @@
 
       <h2>Try the prototype</h2>
       <ul>
-        <li>Drag a card by its handle to rearrange the Dashboard.</li>
+        <li>Drag a card by its handle to rearrange the Dashboard. Nearby cards slide into the available slot as you move.</li>
         <li>Drag the corner grip to resize a card across the responsive grid.</li>
         <li>Click card content to switch focus views.</li>
         <li>Click the compact command bar or press <span class="kbd">⌘</span>/<span class="kbd">Ctrl</span> + <span class="kbd">K</span>.</li>
@@ -522,7 +533,7 @@
 
           <div class="card-grid" id="dashboardGrid">
             <article class="card wide" data-widget="sources" data-focus="sources" tabindex="0" role="button" style="--col-span: 3; --row-span: 3;">
-              <span class="drag-handle" draggable="true" aria-label="Move Sources card">⋮⋮</span>
+              <span class="drag-handle" aria-label="Move Sources card">⋮⋮</span>
               <span class="resize-readout">3×3</span>
               <span class="resize-grip" aria-hidden="true"></span>
               <div class="card-head"><div><small>Grounding</small><h3>Sources</h3></div><span class="badge good">Current</span></div>
@@ -536,7 +547,7 @@
             </article>
 
             <article class="card" data-widget="chat" data-focus="chat" tabindex="0" role="button" style="--col-span: 1; --row-span: 2;">
-              <span class="drag-handle" draggable="true" aria-label="Move Chat card">⋮⋮</span>
+              <span class="drag-handle" aria-label="Move Chat card">⋮⋮</span>
               <span class="resize-readout">1×2</span>
               <span class="resize-grip" aria-hidden="true"></span>
               <div class="card-head"><div><small>Recent thread</small><h3>Chat</h3></div><span class="badge">Resume</span></div>
@@ -546,7 +557,7 @@
             </article>
 
             <article class="card" data-widget="report" data-focus="report" tabindex="0" role="button" style="--col-span: 2; --row-span: 2;">
-              <span class="drag-handle" draggable="true" aria-label="Move Report card">⋮⋮</span>
+              <span class="drag-handle" aria-label="Move Report card">⋮⋮</span>
               <span class="resize-readout">2×2</span>
               <span class="resize-grip" aria-hidden="true"></span>
               <div class="card-head"><div><small>Synthesis artifact</small><h3>Report</h3></div><span class="badge warn">Stale</span></div>
@@ -555,7 +566,7 @@
             </article>
 
             <article class="card" data-widget="quiz" data-focus="quiz" tabindex="0" role="button" style="--col-span: 2; --row-span: 2;">
-              <span class="drag-handle" draggable="true" aria-label="Move Quiz card">⋮⋮</span>
+              <span class="drag-handle" aria-label="Move Quiz card">⋮⋮</span>
               <span class="resize-readout">2×2</span>
               <span class="resize-grip" aria-hidden="true"></span>
               <div class="card-head"><div><small>Study loop</small><h3>Quiz</h3></div><span class="badge">82% last score</span></div>
@@ -565,7 +576,7 @@
             </article>
 
             <article class="card" data-widget="flashcards" data-focus="flashcards" tabindex="0" role="button" style="--col-span: 2; --row-span: 2;">
-              <span class="drag-handle" draggable="true" aria-label="Move Flashcards card">⋮⋮</span>
+              <span class="drag-handle" aria-label="Move Flashcards card">⋮⋮</span>
               <span class="resize-readout">2×2</span>
               <span class="resize-grip" aria-hidden="true"></span>
               <div class="card-head"><div><small>Review deck</small><h3>Flashcards</h3></div><span class="badge good">38 cards</span></div>
@@ -577,7 +588,7 @@
             </article>
 
             <article class="card" data-widget="audio" data-focus="audio" tabindex="0" role="button" style="--col-span: 2; --row-span: 2;">
-              <span class="drag-handle" draggable="true" aria-label="Move Audio card">⋮⋮</span>
+              <span class="drag-handle" aria-label="Move Audio card">⋮⋮</span>
               <span class="resize-readout">2×2</span>
               <span class="resize-grip" aria-hidden="true"></span>
               <div class="card-head"><div><small>Listen mode</small><h3>Audio Review</h3></div><span class="badge warn">Missing</span></div>
@@ -687,9 +698,11 @@
 
     const grid = document.getElementById('dashboardGrid');
     const resetLayout = document.getElementById('resetLayout');
-    const layoutKey = 'sage-dashboard-layout-v2';
-    let draggedCard = null;
+    const layoutKey = 'sage-dashboard-layout-v3';
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     let resizing = null;
+    let dragState = null;
+    let suppressClick = false;
 
     const defaults = Array.from(grid.querySelectorAll('.card')).map(card => ({
       id: card.dataset.widget,
@@ -726,15 +739,151 @@
       });
     }
 
+    function animateLayout(mutator) {
+      if (reduceMotion) {
+        mutator();
+        return;
+      }
+      const cards = Array.from(grid.querySelectorAll('.card'));
+      const first = new Map(cards.map(card => [card, card.getBoundingClientRect()]));
+      mutator();
+      grid.classList.add('grid-settling');
+      cards.forEach(card => {
+        if (dragState && card === dragState.card) return;
+        const before = first.get(card);
+        const after = card.getBoundingClientRect();
+        const dx = before.left - after.left;
+        const dy = before.top - after.top;
+        if (Math.abs(dx) < 1 && Math.abs(dy) < 1) return;
+        card.animate([
+          { transform: `translate(${dx}px, ${dy}px)` },
+          { transform: 'translate(0, 0)' }
+        ], {
+          duration: 260,
+          easing: 'cubic-bezier(.2,.8,.2,1)',
+        });
+      });
+      window.setTimeout(() => grid.classList.remove('grid-settling'), 280);
+    }
+
     function resetLayoutToDefault() {
       localStorage.removeItem(layoutKey);
-      defaults.forEach(item => {
-        const card = grid.querySelector(`[data-widget="${item.id}"]`);
-        card.style.setProperty('--col-span', item.col);
-        card.style.setProperty('--row-span', item.row);
-        grid.appendChild(card);
-        updateCardChrome(card);
+      animateLayout(() => {
+        defaults.forEach(item => {
+          const card = grid.querySelector(`[data-widget="${item.id}"]`);
+          card.style.setProperty('--col-span', item.col);
+          card.style.setProperty('--row-span', item.row);
+          grid.appendChild(card);
+          updateCardChrome(card);
+        });
       });
+    }
+
+    function createGhost(card, rect) {
+      const ghost = card.cloneNode(true);
+      ghost.classList.add('drag-ghost');
+      ghost.classList.remove('is-dragging', 'drop-target');
+      ghost.removeAttribute('id');
+      ghost.style.width = `${rect.width}px`;
+      ghost.style.height = `${rect.height}px`;
+      ghost.style.left = `${rect.left}px`;
+      ghost.style.top = `${rect.top}px`;
+      ghost.style.gridColumn = 'auto';
+      ghost.style.gridRow = 'auto';
+      document.body.appendChild(ghost);
+      return ghost;
+    }
+
+    function moveGhost(x, y) {
+      if (!dragState) return;
+      dragState.ghost.style.left = `${x - dragState.offsetX}px`;
+      dragState.ghost.style.top = `${y - dragState.offsetY}px`;
+    }
+
+    function nearestCard(x, y) {
+      const candidates = Array.from(grid.querySelectorAll('.card')).filter(card => card !== dragState.card);
+      let best = null;
+      let bestScore = Infinity;
+      candidates.forEach(card => {
+        const rect = card.getBoundingClientRect();
+        const inside = x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
+        const cx = rect.left + rect.width / 2;
+        const cy = rect.top + rect.height / 2;
+        const score = Math.hypot(x - cx, y - cy) - (inside ? 1000 : 0);
+        if (score < bestScore) {
+          bestScore = score;
+          best = card;
+        }
+      });
+      return best;
+    }
+
+    function reorderAround(target, x) {
+      if (!target || !dragState || target === dragState.card || target === dragState.lastTarget) return;
+      const cards = Array.from(grid.querySelectorAll('.card'));
+      const from = cards.indexOf(dragState.card);
+      const to = cards.indexOf(target);
+      const targetRect = target.getBoundingClientRect();
+      const afterTarget = x > targetRect.left + targetRect.width / 2;
+      dragState.lastTarget = target;
+      grid.querySelectorAll('.drop-target').forEach(el => el.classList.remove('drop-target'));
+      target.classList.add('drop-target');
+      animateLayout(() => {
+        if (afterTarget) {
+          grid.insertBefore(dragState.card, target.nextSibling);
+        } else {
+          grid.insertBefore(dragState.card, target);
+        }
+      });
+    }
+
+    function startCardDrag(card, handle, e) {
+      if (resizing || window.innerWidth <= 720) return;
+      e.preventDefault();
+      e.stopPropagation();
+      const rect = card.getBoundingClientRect();
+      dragState = {
+        card,
+        handle,
+        ghost: createGhost(card, rect),
+        offsetX: e.clientX - rect.left,
+        offsetY: e.clientY - rect.top,
+        startX: e.clientX,
+        startY: e.clientY,
+        lastTarget: null,
+        moved: false,
+      };
+      card.classList.add('is-dragging');
+      handle.setPointerCapture(e.pointerId);
+      moveGhost(e.clientX, e.clientY);
+    }
+
+    function moveCardDrag(e) {
+      if (!dragState) return;
+      const distance = Math.hypot(e.clientX - dragState.startX, e.clientY - dragState.startY);
+      dragState.moved = dragState.moved || distance > 4;
+      moveGhost(e.clientX, e.clientY);
+      const target = nearestCard(e.clientX, e.clientY);
+      reorderAround(target, e.clientX);
+    }
+
+    function endCardDrag() {
+      if (!dragState) return;
+      const { card, ghost, moved } = dragState;
+      grid.querySelectorAll('.drop-target').forEach(el => el.classList.remove('drop-target'));
+      const finalRect = card.getBoundingClientRect();
+      ghost.animate([
+        { left: ghost.style.left, top: ghost.style.top, opacity: .94, transform: 'scale(1.02)' },
+        { left: `${finalRect.left}px`, top: `${finalRect.top}px`, opacity: .18, transform: 'scale(.99)' }
+      ], {
+        duration: reduceMotion ? 1 : 180,
+        easing: 'cubic-bezier(.2,.8,.2,1)',
+      }).finished.finally(() => ghost.remove());
+      card.classList.remove('is-dragging');
+      saveLayout();
+      suppressClick = moved;
+      window.setTimeout(() => { suppressClick = false; }, 60);
+      dragState = null;
     }
 
     grid.querySelectorAll('.card').forEach(card => {
@@ -742,41 +891,14 @@
       const grip = card.querySelector('.resize-grip');
 
       card.addEventListener('click', (e) => {
-        if (e.target.closest('.drag-handle, .resize-grip, .ghost-action')) return;
+        if (suppressClick || e.target.closest('.drag-handle, .resize-grip, .ghost-action')) return;
         showFocus(card.dataset.focus);
       });
       card.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') showFocus(card.dataset.focus);
       });
 
-      handle.addEventListener('dragstart', (e) => {
-        draggedCard = card;
-        card.classList.add('is-dragging');
-        e.dataTransfer.effectAllowed = 'move';
-        e.dataTransfer.setData('text/plain', card.dataset.widget);
-      });
-      handle.addEventListener('dragend', () => {
-        card.classList.remove('is-dragging');
-        grid.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
-        draggedCard = null;
-        saveLayout();
-      });
-      card.addEventListener('dragover', (e) => {
-        if (!draggedCard || draggedCard === card) return;
-        e.preventDefault();
-        card.classList.add('drag-over');
-      });
-      card.addEventListener('dragleave', () => card.classList.remove('drag-over'));
-      card.addEventListener('drop', (e) => {
-        e.preventDefault();
-        card.classList.remove('drag-over');
-        if (!draggedCard || draggedCard === card) return;
-        const cards = Array.from(grid.querySelectorAll('.card'));
-        const from = cards.indexOf(draggedCard);
-        const to = cards.indexOf(card);
-        grid.insertBefore(draggedCard, from < to ? card.nextSibling : card);
-        saveLayout();
-      });
+      handle.addEventListener('pointerdown', (e) => startCardDrag(card, handle, e));
 
       grip.addEventListener('pointerdown', (e) => {
         e.preventDefault();
@@ -797,17 +919,21 @@
     });
 
     document.addEventListener('pointermove', (e) => {
+      if (dragState) moveCardDrag(e);
       if (!resizing) return;
       const dx = Math.round((e.clientX - resizing.startX) / Math.max(resizing.cellW, 80));
       const dy = Math.round((e.clientY - resizing.startY) / Math.max(resizing.cellH, 80));
       const nextCol = Math.max(1, Math.min(4, resizing.startCol + dx));
       const nextRow = Math.max(1, Math.min(4, resizing.startRow + dy));
-      resizing.card.style.setProperty('--col-span', nextCol);
-      resizing.card.style.setProperty('--row-span', nextRow);
-      updateCardChrome(resizing.card);
+      animateLayout(() => {
+        resizing.card.style.setProperty('--col-span', nextCol);
+        resizing.card.style.setProperty('--row-span', nextRow);
+        updateCardChrome(resizing.card);
+      });
     });
 
     document.addEventListener('pointerup', () => {
+      if (dragState) endCardDrag();
       if (!resizing) return;
       resizing.card.classList.remove('is-resizing');
       saveLayout();
