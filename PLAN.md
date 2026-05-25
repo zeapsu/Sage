@@ -4,7 +4,9 @@
 
 > **For:** Claude Code, Codex, or any coding agent. Follow tasks sequentially. Each task is 2-5 minutes.
 
-> **Read first:** `BRAINSTORM.md`, `DESIGN.md` — full architecture and design spec.
+> **Read first:** `BRAINSTORM.md`, `DESIGN.md`, `docs/PRODUCT_SURFACES.md` — full architecture, design spec, and current product-surface direction.
+
+> **Current direction override:** this Phase 1 plan is historical in places. Current frontend direction is Tome Home as the default in-app surface, Tome Dashboard as secondary, focused skill views for deep work, and a future macOS Spotlight/Raycast-style command overlay. Near-term target is macOS desktop; hosted/web product work is out of scope for now.
 
 ---
 
@@ -29,7 +31,7 @@
 # Backend
 pip install sentence-transformers aiohttp pyyaml
 
-# Frontend  
+# Frontend
 cd frontend && npm install framer-motion zustand clsx tailwind-merge
 ```
 

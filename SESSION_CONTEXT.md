@@ -6,7 +6,7 @@
 
 ## Project Overview
 
-**Sage** (renamed from "arXivSage") — a local-first desktop knowledge agent. Tauri + Next.js 15 frontend (Tailwind v4), FastAPI backend.
+**Sage** (renamed from "arXivSage") — a local-first desktop knowledge agent. Tauri + Next.js 15 frontend (Tailwind v4), FastAPI backend. Near-term product target is macOS desktop.
 
 **Core concept:** User-uploads sources as the primary workflow (like NotebookLM). arXiv search is a secondary "discover more" feature. "Tomes" = isolated sessions with focused sources, each with their own chat history. Sources can belong to multiple tomes (many-to-many).
 
@@ -18,25 +18,26 @@
 
 ## Design Vision: "The Ethereal Console"
 
-A floating command palette UI (Raycast-style). Core principles:
-- **No 1px solid borders** — boundaries via color shifts + depth
-- **Dark theme only** — rich charcoal palette, never pure `#000`
-- **Floating pill input bar** — centered upper third, 600×48px, `backdrop-blur: 32px`
-- **7 window states** that stack as cards: Compact Input, Chat, Quiz, Flashcards, Audio Player, Report, History
+Current direction is **Tome Home + command overlay**, not “only a floating palette.”
 
-Full spec: `DESIGN.md`
+- **Tome Home**: default in-app surface implemented in `frontend/src/app/page.tsx`; calm, composer-first, selected-Tome aware, with capability chips.
+- **Tome Dashboard**: secondary overview for artifact/source status and generated work management.
+- **Global command bar**: future Spotlight/Raycast-style macOS overlay for quick capture, search, Tome opening, and skill launch from anywhere.
+- **Focused views**: Chat, Quiz, Flashcards, Audio, Report, History, and Tomes/Sources.
+
+Core principles remain: no heavy chrome, dark charcoal palette, depth over hard dividers, and sparse accent use. Full spec: `DESIGN.md`; current product-surface context: `docs/PRODUCT_SURFACES.md`.
 
 ---
 
 ## Component Inventory (15 components)
 
-### ✅ Ethereal Console Components (8) — Production-ready
+### ✅ Ethereal Console Components and Surfaces — Production-ready
 
-All follow `DESIGN.md` glassmorphic spec. Used in `page.tsx`.
+Focused components follow `DESIGN.md` glassmorphic spec. `page.tsx` also owns app-level surfaces: `TomeHome`, `TomeDashboard`, `TopBar`, and `FocusShell`.
 
 | Component | File | Description |
 |-----------|------|-------------|
-| **CommandBar** | `CommandBar.tsx` | Pill input bar (600×48px), sparkle icon, provider badge |
+| **CommandBar** | `CommandBar.tsx` | Pill input bar. Keep for future global overlay / focused command input patterns. |
 | **ChatWidget** | `ChatWidget.tsx` | Chat card with message bubbles, typing indicator, auto-scroll |
 | **QuizWidget** | `QuizWidget.tsx` | Interactive quiz with progress dots, confirm/skip, completion ring |
 | **FlashcardWidget** | `FlashcardWidget.tsx` | 3D flip cards (Framer Motion), shuffle/reset, keyboard nav |
@@ -144,13 +145,15 @@ Full spec written at `AGENT_SKILL_SPEC.md` (632 lines). Covers:
 
 ---
 
-## What's Next (After Legacy Cleanup)
+## What's Next
 
 | Priority | Item |
 |----------|------|
+| 🔴 | **Global command bar overlay** — design macOS Spotlight/Raycast-style layer separately from Tome Home |
 | 🔴 | **AudioPlayerWidget** — needs `audio_url` prop + real `<audio>` element (currently simulated with setInterval) |
 | 🔴 | **ChatWidget** — needs streaming support (SSE/WebSocket, currently static) |
 | 🔴 | **Backend integration** — wire up `/api/agent/chat` → Agent Orchestrator → Skill Registry |
 | 🟡 | **Piper TTS setup** — voice models + pipeline for `generate_audio_review` |
 | 🟡 | **Responsive/viewport testing** |
+| 🟡 | **Web scope** — keep hosted/browser product out of scope; browser mode is for development only |
 | 🟢 | **ComparisonWidget** / **TimelineWidget** — future dedicated components |
