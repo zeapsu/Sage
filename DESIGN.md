@@ -13,6 +13,32 @@ No 1px solid borders for internal sectioning. Boundaries are defined through **b
 
 ---
 
+
+## Product Surface Model
+
+Sage now has two complementary desktop surfaces:
+
+1. **Tome Home — default in-app surface**
+   - Calm, centered, composer-first, and Tome-aware.
+   - Appears after opening Sage or selecting a Tome.
+   - Provides natural-language input, visible capability chips, selected Tome context, and a path to the expanded dashboard.
+   - Optimized for deliberate work inside a Tome.
+
+2. **Global Command Bar — OS overlay**
+   - Spotlight/Raycast-style layer invoked by a macOS global hotkey.
+   - Used for quick capture, search, opening a Tome, or launching a skill from anywhere.
+   - Lightweight and transient; it can route into Tome Home or focused skill views when deeper work is needed.
+
+Tome Home does **not** replace the command bar. It gives Sage a calmer home base, while the command bar preserves the original “intelligence layer over the OS” direction.
+
+3. **Focused Views**
+   - Deep-work surfaces for chat, reports, quizzes, flashcards, audio, history, sources/Tomes, and future skills.
+   - These are the primary render targets for backend skill results.
+
+Near-term interaction design should optimize for macOS desktop. Browser rendering remains useful for frontend development, but a hosted web product is out of scope for now.
+
+---
+
 ## Design Tokens
 
 ### Color Palette (Dark Only)
@@ -89,7 +115,29 @@ No 1px solid borders for internal sectioning. Boundaries are defined through **b
 
 The floating window is a **card stack**. The input bar is always the bottom layer; content cards stack on top based on interaction.
 
-### State 1: Compact Input (Default)
+
+### State 0: Tome Home
+
+Default in-app surface after opening Sage or selecting a Tome.
+
+```
+Good afternoon, zeap.
+[Selected Tome chip]
+┌──────────────────────────────────────────────────────────┐
+│ Ask Sage about this Tome, or type / for Tome skills...   │
+│                                              [+] [model] │
+└──────────────────────────────────────────────────────────┘
+[Sources] [Report] [Quiz] [Flashcards] [Audio] [Chat]
+                 View expanded Tome dashboard →
+```
+
+- **Role:** Calm home base for deliberate Tome work
+- **Content:** Selected Tome context, large composer, capability chips, dashboard affordance
+- **Default:** Opening the app or selecting a Tome lands here
+- **Dashboard:** Secondary overview for freshness/status, reached intentionally
+- **Interaction:** Capability chips route to focused views; composer routes natural language intent
+
+### State 1: Global Command Overlay
 
 ```
 ┌──────────────────────────────────────────────────────────┐
@@ -98,6 +146,7 @@ The floating window is a **card stack**. The input bar is always the bottom laye
 ```
 
 - **Size:** 600px × 48px
+- **Role:** Transient macOS overlay, not the primary in-app home page
 - **Position:** Centered horizontally, **upper third** of screen (~20–25% from top)
 - **Shape:** Full rounded (pill)
 - **Background:** `surface` at 80% opacity + `backdrop-blur: 32px` — slightly lighter than the deepest background to create floating effect
@@ -303,9 +352,11 @@ The floating window is a **card stack**. The input bar is always the bottom laye
 1. **Window position** persists across sessions (user can drag to reposition)
 2. **Going back** collapses the top card (Esc key or back gesture)
 3. **Pin mode** (optional): Click pin icon to keep window visible
-4. **Global hotkey** activates the palette (configurable, default: `Cmd+Shift+S`)
+4. **Global hotkey** activates the command overlay (configurable, default: `Cmd+Shift+S`)
 5. **X button** appears on hover (top-right, like Raycast)
 6. **No window chrome** — no title bar, no system decorations
+7. **Opening the full app** lands on Tome Home, not the compact overlay
+8. **Tome Dashboard** is secondary and reached intentionally from Tome Home
 
 ---
 

@@ -12,16 +12,22 @@ Sage is moving toward a NotebookLM-like experience that stays local-first and pr
 - **Tomes**: focused workspaces that isolate source sets and chat history.
 - **Bring your own agent/provider**: local models, Ollama, OpenAI-compatible APIs, Anthropic, DeepSeek, and other providers through a small backend abstraction.
 - **Grounded outputs**: chat, reports, quizzes, flashcards, and audio reviews that cite or otherwise remain tied to the selected sources.
-- **Floating desktop UX**: an Ethereal Console style interface that feels like a lightweight intelligence layer over the OS.
+- **Tome Home default**: a calm, composer-first surface after opening Sage or selecting a Tome.
+- **Floating desktop UX**: a future Spotlight/Raycast-style command bar that feels like a lightweight intelligence layer over macOS.
 
 arXiv support and paper summarization remain useful discovery paths, but they are no longer the center of the product. The main direction is user-owned local knowledge.
+
+The desktop UI has two complementary layers: **Tome Home** for deliberate in-app work, and a future **global command bar** for quick macOS capture/search/skill launch from anywhere. Tome Dashboard remains a secondary overview for artifact status and management, not the default first impression.
+
+Near-term scope is macOS desktop-first. The Next.js frontend can run in a browser for development, but a hosted/user-facing web version is out of scope until the desktop UX, local data model, privacy story, and sync requirements are stable.
 
 ## Current Features
 
 - **Tauri desktop shell** with a Next.js 15 frontend.
 - **FastAPI backend** for knowledge, chat, Tomes, providers, and research discovery endpoints.
 - **Local knowledge store** with document chunks, embeddings, sessions, and Tome/source links.
-- **Floating command UI** with chat, report, quiz, flashcard, audio, history, and Tome-oriented components.
+- **Tome Home** composer-first UI with capability chips for chat, report, quiz, flashcards, audio, history, and Tome-oriented components.
+- **Secondary Tome Dashboard** for artifact/source status and generated work management.
 - **Tailwind v4 design tokens** for the dark Ethereal Console visual system.
 - **pytest backend suite** and GitHub Actions CI.
 
@@ -31,6 +37,7 @@ Several planning/specification files in the repo describe where Sage is headed:
 
 - `BRAINSTORM.md`: product direction from arXiv summarizer to local knowledge agent.
 - `DESIGN.md`: Ethereal Console UI/UX specification.
+- `docs/PRODUCT_SURFACES.md`: current Tome Home, command-bar overlay, desktop/web scope context for humans and agents.
 - `PLAN.md`: implementation plan for the local knowledge agent foundation.
 - `AGENT_SKILL_SPEC.md`: contract between backend skills and frontend UI components.
 - `STITCH_PROMPT.md`: original design prompt/reference for the floating UI.
@@ -133,17 +140,20 @@ Sage/
 │   ├── src/lib/             # Typed API client and frontend utilities
 │   └── src-tauri/           # Tauri desktop configuration
 ├── designs/                 # Design references and generated visual artifacts
+├── docs/                    # Current product-surface notes and feature references
 ├── *.md                     # Product, design, agent, and implementation docs
 └── README.md
 ```
 
 ## Near-Term Roadmap
 
-- Finish replacing old pre-Ethereal UI paths with the Ethereal Console components.
+- Keep Tome Home as the default composer-first app surface and Tome Dashboard as a secondary overview.
+- Design the macOS global command bar as a separate Spotlight/Raycast-style overlay for quick capture, search, and skill launch.
 - Make Tomes first-class across upload, chat, retrieval, history, and generated artifacts.
 - Improve report rendering and exports, likely moving toward an HTML-friendly artifact model.
 - Add explicit schema migrations for existing local Sage databases.
 - Expand evaluation coverage for retrieval quality, grounding, and generated artifact correctness.
+- Defer hosted/web product work until macOS desktop behavior and local data assumptions are stable.
 
 ## Contributing
 

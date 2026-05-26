@@ -20,6 +20,28 @@ User Query → Agent Orchestrator → LLM selects tool → Skill executes → Sk
                                                          matching React card
 ```
 
+## Frontend Surface Hierarchy
+
+The frontend has three conceptual layers:
+
+1. **Tome Home**
+   - Default in-app landing surface.
+   - Collects user intent through a large composer and visible capability chips.
+   - Routes natural-language prompts or capability clicks into focused skill views.
+
+2. **Focused Skill Views**
+   - Render skill outputs such as `ChatWidget`, `ReportViewWidget`, `QuizWidget`, `FlashcardWidget`, `AudioPlayerWidget`, `HistoryPanel`, and `TomeSelector`.
+   - These are the primary targets for `SkillResult.ui_component`.
+
+3. **Global Command Bar**
+   - Future macOS desktop overlay.
+   - Uses the same backend skill/orchestrator contract.
+   - Can route into Tome Home or directly into a focused skill view.
+
+Tome Home itself should remain the neutral starting state; do not treat it as a normal skill result component unless a future route-level registry is added.
+
+---
+
 ### SkillResult Contract
 
 ```python
@@ -44,17 +66,29 @@ const COMPONENT_REGISTRY: Record<string, React.ComponentType<any>> = {
   "ReportViewWidget": ReportViewWidget,
   "HistoryPanel": HistoryPanel,
   "TomeSelector": TomeSelector,
-  "CommandBar": CommandBar,
+  "CommandBar": CommandBar, // future/global overlay entry point
 };
 ```
 
 When a `SkillResult` arrives:
-1. If `ui_component` is set → render the matching card with `data` as props
+1. If `ui_component` is set → route to the matching focused view/card with `data` as props
 2. If `ui_component` is null → append `content` as a markdown chat message
+3. Tome Home remains the neutral starting surface; skill results should not replace it permanently
 
 ---
 
 ## 2. Component Inventory
+
+### 2.0 App-Level Surfaces
+
+These currently live in `frontend/src/app/page.tsx`:
+
+| Surface | Role |
+|---------|------|
+| **TomeHome** | Default composer-first home after opening Sage or selecting a Tome |
+| **TomeDashboard** | Secondary overview for artifact/source status and generated work management |
+| **TopBar** | Navigation among Home, Dashboard, History, and Tomes |
+| **FocusShell** | Wrapper that hosts focused skill views and returns to Tome Home |
 
 ### 2.1 Ethereal Console Components (DESIGN.md compliant ✅)
 
@@ -62,7 +96,7 @@ These 8 components follow the glassmorphic "Ethereal Console" design system — 
 
 | # | Component | File | Status | Description |
 |---|-----------|------|--------|-------------|
-| 1 | **CommandBar** | `CommandBar.tsx` | ✅ Ready | Pill input bar (600×48px), sparkle icon, provider badge. The entry point. |
+| 1 | **CommandBar** | `CommandBar.tsx` | ✅ Ready | Pill input bar. Future global overlay entry point / reusable command input. |
 | 2 | **ChatWidget** | `ChatWidget.tsx` | ✅ Ready | Chat card with message bubbles, typing indicator, auto-scroll. Has sample data. |
 | 3 | **QuizWidget** | `QuizWidget.tsx` | ✅ Ready | Interactive quiz with progress dots, confirm/skip flow, completion ring. |
 | 4 | **FlashcardWidget** | `FlashcardWidget.tsx` | ✅ Ready | 3D flip cards (Framer Motion), shuffle/reset, keyboard nav (arrows + space). |

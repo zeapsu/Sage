@@ -8,7 +8,7 @@
 
 **Architecture**: Tauri desktop app (Next.js + Tailwind frontend, FastAPI backend)
 **What it does**: Search arXiv → download PDFs → extract text → summarize with DeepSeek → Instagram-style feed
-**Strengths**: 
+**Strengths**:
 - Working Tauri desktop app (cross-platform)
 - Clean FastAPI backend with caching
 - PDF extraction pipeline (pdfplumber)
@@ -26,8 +26,19 @@
 
 ## The Vision: "Sage" — Local Knowledge Agent
 
+### Updated UI Direction: Tome Home + Command Overlay
+
+The current product direction is not “only a floating palette.” Sage should have a calm default Tome Home for focused work, plus a lightweight global command overlay for quick macOS interactions.
+
+- **Tome Home**: default in-app surface after opening Sage or selecting a Tome.
+- **Tome Dashboard**: secondary overview, not the first impression.
+- **Command overlay**: Spotlight/Raycast-style hotkey layer for quick search, capture, and skill launch.
+- **Web version**: out of scope for now; browser mode is a development convenience.
+
+See `docs/PRODUCT_SURFACES.md` for current surface hierarchy.
+
 ### Core Idea
-A local-first desktop app where users:
+A local-first macOS desktop app where users:
 1. **Import documents** (PDFs, markdown, Obsidian vault, web clips, etc.) into a local knowledge store
 2. **Connect any agent provider** (OpenAI, Anthropic, local Ollama, DeepSeek, etc.) via BYOA config
 3. **Use skills/tools** that the app supplies to the agent, enabling: quizzes, flashcards, reports, Q&A, comparisons, timelines, and more
@@ -172,7 +183,7 @@ CREATE TABLE messages (
 ```python
 class AgentProvider(ABC):
     """Abstract interface for any LLM provider."""
-    
+
     @abstractmethod
     async def chat(
         self,
@@ -201,22 +212,22 @@ class AgentProvider(ABC):
 # ~/.sage/config.yaml
 providers:
   default: "ollama"
-  
+
   ollama:
     base_url: "http://localhost:11434"
     default_model: "llama3.1:8b"
-    
+
   openai:
     api_key: "${OPENAI_API_KEY}"
     default_model: "gpt-4o-mini"
-    
+
   anthropic:
     api_key: "${ANTHROPIC_API_KEY}"
     default_model: "claude-sonnet-4-20250514"
 
 knowledge_store:
   path: "~/.sage/knowledge.db"
-  
+
 obsidian:
   vault_path: "~/Documents/ObsidianVault"
   sync_interval: 300  # seconds
