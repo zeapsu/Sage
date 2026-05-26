@@ -187,8 +187,8 @@ function TomeHome({ onSubmit, onNavigate }: { onSubmit: (text: string) => void; 
     <section className="grid min-h-[calc(100vh-8rem)] place-items-center pb-16 pt-4">
       <div className="w-full max-w-[820px] text-center">
         <div className="mb-5 inline-flex items-center gap-2 text-sm text-[#9f9788]">
-          <span className="h-2.5 w-2.5 rounded-full bg-[#abc7ad] shadow-[0_0_22px_rgba(171,199,173,0.58)]" />
-          <span>Tome ready</span>
+          <span className="h-2.5 w-2.5 rounded-full bg-[#d8b978] shadow-[0_0_22px_rgba(216,185,120,0.44)]" />
+          <span>Tome preview</span>
         </div>
 
         <h1 className="font-serif text-[clamp(2.8rem,7vw,5.4rem)] font-normal leading-[0.96] tracking-[-0.05em]">
@@ -202,9 +202,9 @@ function TomeHome({ onSubmit, onNavigate }: { onSubmit: (text: string) => void; 
           onClick={() => onNavigate("tomes")}
           className="mt-7 inline-flex flex-wrap items-center justify-center gap-x-3 gap-y-1 rounded-full border border-white/10 bg-white/[0.055] px-4 py-2.5 text-sm text-[#ede6d5] transition-colors hover:border-[#f2a85d]/30 hover:bg-[#f2a85d]/10"
         >
-          <span className="text-[#9f9788]">Current Tome</span>
-          <strong className="font-medium">Tome Home</strong>
-          <span className="text-[#9f9788]">ready for research</span>
+          <span className="text-[#9f9788]">Preview Tome</span>
+          <strong className="font-medium">Sample Tome Home</strong>
+          <span className="text-[#9f9788]">placeholder status</span>
         </button>
 
         <form
@@ -269,12 +269,15 @@ function TomeDashboard({ onNavigate }: { onNavigate: (view: ViewState) => void }
         <p className="mt-3 max-w-2xl leading-7 text-[#9f9788]">
           Review sources, generated artifacts, freshness, and recent work for this Tome.
         </p>
+        <p className="mt-3 max-w-2xl text-sm leading-6 text-[#d8b978]">
+          Preview statuses shown until Tome selection and generated artifact state are wired.
+        </p>
 
         <div className="mt-6 grid gap-3 sm:grid-cols-2">
-          <DashboardCard title="Sources" detail="Research notes and uploads indexed" status="Current" tone="good" onClick={() => onNavigate("tomes")} />
-          <DashboardCard title="Report" detail="Generate or revisit the latest study guide" status="Ready" tone="warn" onClick={() => onNavigate("report")} />
-          <DashboardCard title="Quiz" detail="Practice against the selected Tome" status="Ready" tone="good" onClick={() => onNavigate("quiz")} />
-          <DashboardCard title="Audio" detail="Listen to a narrated review" status="Optional" tone="muted" onClick={() => onNavigate("audio")} />
+          <DashboardCard title="Sources" detail="Research notes and uploads indexed" status="Preview" tone="warn" onClick={() => onNavigate("tomes")} />
+          <DashboardCard title="Report" detail="Generate or revisit the latest study guide" status="Preview" tone="warn" onClick={() => onNavigate("report")} />
+          <DashboardCard title="Quiz" detail="Practice against the selected Tome" status="Preview" tone="warn" onClick={() => onNavigate("quiz")} />
+          <DashboardCard title="Audio" detail="Listen to a narrated review" status="Preview" tone="muted" onClick={() => onNavigate("audio")} />
         </div>
 
         <div className="mt-6 overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-b from-[#1a1915]/90 to-[#0e0e0c]/90">
