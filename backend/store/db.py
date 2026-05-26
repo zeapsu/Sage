@@ -77,6 +77,18 @@ class KnowledgeStore:
         self._init_schema()
 
     def _init_schema(self):
+        existing_tables = {
+            row[0]
+            for row in self.conn.execute(
+                "SELECT name FROM sqlite_master WHERE type='table'"
+            )
+        }
+        if "documents" in existing_tables:
+            document_columns = {
+                row[1] for row in self.conn.execute("PRAGMA table_info(documents)")
+            }
+            if "content_hash" not in document_columns:
+                self.conn.execute("ALTER TABLE documents ADD COLUMN content_hash TEXT")
         self.conn.executescript(SCHEMA)
         self.conn.commit()
 
@@ -235,6 +247,7 @@ class KnowledgeStore:
         """List chat sessions with a derived title, tome name, and activity timestamps.
 
         Returns rows shaped for the History panel — newest activity first."""
+        limit = max(1, min(limit, 500))
         rows = self.conn.execute(
             """
             SELECT

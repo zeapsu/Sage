@@ -6,7 +6,7 @@ from typing import Optional
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from api import chat, knowledge, skills as skills_api, tomes as tomes_api
+from api import audio, chat, generate, knowledge, skills as skills_api, tomes as tomes_api
 from config import SageConfig
 from skills.read_document import ReadDocumentSkill
 from skills.registry import SkillRegistry
@@ -41,6 +41,8 @@ def create_test_app(db_path: Optional[Path] = None) -> tuple[FastAPI, KnowledgeS
     app.include_router(chat.router)
     app.include_router(tomes_api.router)
     app.include_router(skills_api.router)
+    app.include_router(generate.router)
+    app.include_router(audio.router)
 
     @app.get("/")
     def root():
