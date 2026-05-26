@@ -38,20 +38,22 @@ export default function Home() {
   const handleSubmit = (text: string) => {
     const lower = text.toLowerCase().trim();
 
-    if (lower.includes("quiz")) {
+    if (lower === "/quiz") {
       setViewState("quiz");
-    } else if (lower.includes("flashcard") || lower.includes("flash card")) {
+    } else if (lower === "/flashcards" || lower === "/flashcard") {
       setViewState("flashcards");
-    } else if (lower.includes("audio") || lower.includes("listen") || lower.includes("podcast")) {
+    } else if (lower === "/audio") {
       setViewState("audio");
-    } else if (lower.includes("report") || lower.includes("study guide") || lower.includes("summary")) {
+    } else if (lower === "/report") {
       setViewState("report");
-    } else if (lower.includes("history")) {
+    } else if (lower === "/history") {
       setViewState("history");
-    } else if (lower.includes("dashboard") || lower.includes("status")) {
+    } else if (lower === "/dashboard") {
       setViewState("dashboard");
-    } else if (lower.includes("tome") || lower.includes("collection") || lower.includes("library") || lower.includes("source")) {
+    } else if (lower === "/sources" || lower === "/tomes") {
       setViewState("tomes");
+    } else if (lower === "/chat") {
+      setViewState("chat");
     } else {
       setViewState("chat");
     }
@@ -90,25 +92,25 @@ export default function Home() {
           )}
 
           {viewState === "quiz" && (
-            <FocusShell keyName="quiz" variants={cardVariants} transition={cardTransition} onBack={handleBack}>
+            <FocusShell keyName="quiz" variants={cardVariants} transition={cardTransition} onBack={handleBack} previewNote="Preview content until Tome-generated quizzes are connected.">
               <QuizWidget title="Transformers Quiz" questions={SAMPLE_QUESTIONS} />
             </FocusShell>
           )}
 
           {viewState === "flashcards" && (
-            <FocusShell keyName="flashcards" variants={cardVariants} transition={cardTransition} onBack={handleBack}>
+            <FocusShell keyName="flashcards" variants={cardVariants} transition={cardTransition} onBack={handleBack} previewNote="Preview content until Tome-generated flashcards are connected.">
               <FlashcardWidget title="Transformer Concepts" cards={SAMPLE_FLASHCARDS} />
             </FocusShell>
           )}
 
           {viewState === "audio" && (
-            <FocusShell keyName="audio" variants={cardVariants} transition={cardTransition} onBack={handleBack}>
+            <FocusShell keyName="audio" variants={cardVariants} transition={cardTransition} onBack={handleBack} previewNote="Preview content until Tome-generated audio reviews are connected.">
               <AudioPlayerWidget track={SAMPLE_TRACK} />
             </FocusShell>
           )}
 
           {viewState === "report" && (
-            <FocusShell keyName="report" variants={cardVariants} transition={cardTransition} onBack={handleBack}>
+            <FocusShell keyName="report" variants={cardVariants} transition={cardTransition} onBack={handleBack} previewNote="Preview content until Tome-generated reports are connected.">
               <ReportViewWidget report={SAMPLE_REPORT} />
             </FocusShell>
           )}
@@ -186,23 +188,23 @@ function TomeHome({ onSubmit, onNavigate }: { onSubmit: (text: string) => void; 
       <div className="w-full max-w-[820px] text-center">
         <div className="mb-5 inline-flex items-center gap-2 text-sm text-[#9f9788]">
           <span className="h-2.5 w-2.5 rounded-full bg-[#abc7ad] shadow-[0_0_22px_rgba(171,199,173,0.58)]" />
-          <span>Default after Tome selection</span>
+          <span>Tome ready</span>
         </div>
 
         <h1 className="font-serif text-[clamp(2.8rem,7vw,5.4rem)] font-normal leading-[0.96] tracking-[-0.05em]">
           Good afternoon, zeap.
         </h1>
         <p className="mx-auto mt-5 max-w-[650px] text-base leading-7 text-[#9f9788]">
-          A calm Tome-aware command center: ask Sage, reveal common capabilities, and jump into focused work without opening on a heavy dashboard.
+          Ask questions, generate study materials, manage sources, or jump into focused work for this Tome.
         </p>
 
         <button
           onClick={() => onNavigate("tomes")}
           className="mt-7 inline-flex flex-wrap items-center justify-center gap-x-3 gap-y-1 rounded-full border border-white/10 bg-white/[0.055] px-4 py-2.5 text-sm text-[#ede6d5] transition-colors hover:border-[#f2a85d]/30 hover:bg-[#f2a85d]/10"
         >
-          <span className="text-[#9f9788]">Selected Tome</span>
+          <span className="text-[#9f9788]">Current Tome</span>
           <strong className="font-medium">Tome Home</strong>
-          <span className="text-[#9f9788]">research space · active today</span>
+          <span className="text-[#9f9788]">ready for research</span>
         </button>
 
         <form
@@ -254,7 +256,7 @@ function TomeDashboard({ onNavigate }: { onNavigate: (view: ViewState) => void }
       <article className="rounded-[26px] border border-white/10 bg-[#11110f]/75 p-6 shadow-[0_20px_70px_rgba(0,0,0,0.24)]">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <p className="text-sm text-[#9f9788]">Secondary overview</p>
+            <p className="text-sm text-[#9f9788]">Tome overview</p>
             <h2 className="mt-1 text-2xl font-medium tracking-[-0.03em] text-[#ede6d5]">Expanded Tome Dashboard</h2>
           </div>
           <button
@@ -265,7 +267,7 @@ function TomeDashboard({ onNavigate }: { onNavigate: (view: ViewState) => void }
           </button>
         </div>
         <p className="mt-3 max-w-2xl leading-7 text-[#9f9788]">
-          This dashboard stays available for artifact freshness, output status, and generated work management. It is useful context, just not the first impression.
+          Review sources, generated artifacts, freshness, and recent work for this Tome.
         </p>
 
         <div className="mt-6 grid gap-3 sm:grid-cols-2">
@@ -292,12 +294,12 @@ function TomeDashboard({ onNavigate }: { onNavigate: (view: ViewState) => void }
       </article>
 
       <aside className="rounded-[26px] border border-white/10 bg-[#11110f]/75 p-6 shadow-[0_20px_70px_rgba(0,0,0,0.24)]">
-        <h2 className="text-2xl font-medium tracking-[-0.03em] text-[#ede6d5]">What changed?</h2>
+        <h2 className="text-2xl font-medium tracking-[-0.03em] text-[#ede6d5]">Tome activity</h2>
         <div className="mt-5 grid gap-3">
-          <DecisionRow label="Default" text="A centered Tome Home with command box and capability chips." />
-          <DecisionRow label="Dashboard" text="An optional expanded overview for freshness and artifact management." />
-          <DecisionRow label="Command" text="Natural language stays primary, with visible buttons for common actions." />
-          <DecisionRow label="Focus" text="Each feature still owns a focused deep-work surface." />
+          <DecisionRow label="Sources" text="Manage uploaded notes, papers, and references." />
+          <DecisionRow label="Artifacts" text="Revisit reports, quizzes, flashcards, and audio." />
+          <DecisionRow label="Chat" text="Continue conversations grounded in this Tome." />
+          <DecisionRow label="History" text="Review recent work and generated outputs." />
         </div>
       </aside>
     </section>
@@ -309,21 +311,32 @@ function FocusShell({
   variants,
   transition,
   onBack,
+  previewNote,
   children,
 }: {
   keyName: string;
   variants: Variants;
   transition: Transition;
   onBack: () => void;
+  previewNote?: string;
   children: ReactNode;
 }) {
   return (
     <motion.div key={keyName} variants={variants} initial="initial" animate="animate" exit="exit" transition={transition} className="w-full flex-1">
       <div className="relative z-10 flex w-full flex-col items-center gap-4 pb-16 pt-4">
+        {previewNote && <PreviewNote>{previewNote}</PreviewNote>}
         {children}
         <BackButton onClick={onBack} />
       </div>
     </motion.div>
+  );
+}
+
+function PreviewNote({ children }: { children: ReactNode }) {
+  return (
+    <div className="w-full max-w-[640px] rounded-full border border-[#d8b978]/15 bg-[#d8b978]/10 px-4 py-2 text-center text-sm text-[#d8b978]">
+      {children}
+    </div>
   );
 }
 
