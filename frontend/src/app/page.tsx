@@ -230,7 +230,7 @@ function TomeHome({ onSubmit, onNavigate }: { onSubmit: (text: string) => void; 
         </div>
 
         <h1 className="font-serif text-[clamp(2.8rem,7vw,5.4rem)] font-normal leading-[0.96] tracking-[-0.05em]">
-          Good afternoon, zeap.
+          What should this Tome help with next?
         </h1>
         <p className="mx-auto mt-5 max-w-[650px] text-base leading-7 text-[#9f9788]">
           Ask questions, generate study materials, manage sources, or jump into focused work for this Tome.
@@ -276,6 +276,10 @@ function TomeHome({ onSubmit, onNavigate }: { onSubmit: (text: string) => void; 
             <CapabilityButton key={capability.label} {...capability} onSubmit={onSubmit} onNavigate={onNavigate} />
           ))}
         </div>
+        <p className="mx-auto mt-4 max-w-[660px] text-sm leading-6 text-[#6f675b]">
+          Generation skills use your current knowledge base and configured provider. Add sources first for grounded output;
+          audio falls back to browser narration when server-side speech is unavailable.
+        </p>
 
         <button
           onClick={() => onNavigate("dashboard")}
