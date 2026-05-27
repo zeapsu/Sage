@@ -2,7 +2,7 @@
 
 > **Goal:** Build the foundation: SQLite knowledge store, provider abstraction, agent orchestrator, skill registry, embeddings, and the floating window shell.
 
-> **Status note (May 2026):** Historical implementation plan. The current branch should treat README and [`../agents/session-context.md`](../agents/session-context.md) as product truth. Do not replay these steps blindly; many files already exist and Tome Home is now the default UI.
+> **Status note (May 2026):** Historical implementation plan. The current branch should treat README and [`../agents/handoff.md`](../agents/handoff.md) as product truth. Do not replay these steps blindly; many files already exist and Tome Home is now the default UI.
 
 > **For:** Claude Code, Codex, or any coding agent. Follow tasks sequentially. Each task is 2-5 minutes.
 

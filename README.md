@@ -33,7 +33,7 @@ Root-level planning/spec Markdown has been organized under `docs/`:
 - [`docs/product/vision.md`](docs/product/vision.md): product direction from arXiv summarizer to local knowledge agent.
 - [`docs/design/ethereal-console.md`](docs/design/ethereal-console.md): Ethereal Console UI/UX specification.
 - [`docs/design/stitch-prompt.md`](docs/design/stitch-prompt.md): original Stitch prompt/reference for the floating UI.
-- [`docs/agents/session-context.md`](docs/agents/session-context.md): fast onboarding context for coding agents and future sessions.
+- [`docs/agents/handoff.md`](docs/agents/handoff.md): fast onboarding context for coding agents and future sessions.
 - [`docs/agents/skill-spec.md`](docs/agents/skill-spec.md): contract between backend skills and frontend UI/components.
 - [`docs/planning/phase-1-plan.md`](docs/planning/phase-1-plan.md): historical implementation plan for the local knowledge foundation.
 - [`docs/planning/legacy-todo.md`](docs/planning/legacy-todo.md): archived early project checklist.

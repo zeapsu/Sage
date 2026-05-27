@@ -1,4 +1,4 @@
-# Sage — Agent Onboarding Context (May 26, 2026)
+# Sage — Agent Handoff (May 26, 2026)
 
 > Fast handoff context for humans and coding agents. Main at commit `53b83e0` is the baseline product truth; this branch layers local owner-profile setup/settings work on top.
 
