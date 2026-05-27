@@ -28,6 +28,8 @@ This branch keeps the owner-specific greeting and adds the local profile flow ne
 - Added a small local profile utility layer for loading, saving, validating, and normalizing owner profile data.
 - Preserved owner-specific default behavior for the existing owner while making new-user setup explicit.
 - Fixed the Tauri config schema issue found during validation.
+- Updated the Tauri desktop window from the old compact command-bar dimensions to a resizable Tome Home-sized window, and enabled macOS transparent-window support.
+- Documented the frontend Node runtime range and added `frontend/.nvmrc` so macOS/dev environments can use Node 22 LTS instead of newer current Node releases that emit upstream `DEP0205` dev warnings.
 - Organized project documentation under `docs/` with purpose-based subdirectories.
 - Moved agent onboarding/contract docs into `docs/agents/` and added `docs/agents/README.md` as the coding-agent entrypoint.
 - Refreshed README/doc links so current product truth points at Tome Home, local-first storage, and the agent onboarding context instead of old root-level or planning paths.

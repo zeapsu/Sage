@@ -62,7 +62,7 @@ Root-level planning/spec Markdown has been organized under `docs/`:
 
 ### Prerequisites
 
-- Node.js 20+
+- Node.js 22 LTS recommended (`cd frontend && nvm use`); supported range is Node.js 20-24. Newer current releases may emit upstream Next/Tailwind deprecation warnings such as `DEP0205` during dev startup.
 - Rust, latest stable
 - Python 3.11+
 - `uv`
