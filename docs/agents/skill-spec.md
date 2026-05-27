@@ -89,6 +89,8 @@ These components are the current user-facing direction. Tome Home (`frontend/src
 | **AudioView / AudioPlayerWidget** | `AudioView.tsx`, `AudioPlayerWidget.tsx` | Generated audio review/narration view and player component. |
 | **ReportView / ReportViewWidget** | `ReportView.tsx`, `ReportViewWidget.tsx` | Generated report artifact view and markdown/report component. |
 | **HistoryPanel** | `HistoryPanel.tsx` | History surface. |
+| **ProfileSetup** | `ProfileSetup.tsx` | First-run local profile setup for owner-specific greetings and user details. |
+| **SettingsPanel** | `SettingsPanel.tsx` | Editable local profile/settings surface. |
 | **UploadModal** | `UploadModal.tsx` | Source upload modal. |
 | **CommandBar** | `CommandBar.tsx` | Earlier compact command bar component; still aligned with Ethereal Console direction. |
 
