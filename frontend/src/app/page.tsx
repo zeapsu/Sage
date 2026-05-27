@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { FormEvent, KeyboardEvent, ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import type { Transition, Variants } from "framer-motion";
@@ -9,13 +9,17 @@ import ChatWidget from "@/components/ChatWidget";
 import FlashcardsView from "@/components/FlashcardsView";
 import HistoryPanel from "@/components/HistoryPanel";
 import KnowledgeBaseWidget from "@/components/KnowledgeBaseWidget";
+import ProfileSetup from "@/components/ProfileSetup";
 import QuizView from "@/components/QuizView";
 import ReportView from "@/components/ReportView";
+import SettingsPanel from "@/components/SettingsPanel";
 import TomeSelector from "@/components/TomeSelector";
 import { detectView } from "@/lib/command-routing";
 import type { RoutedView } from "@/lib/command-routing";
+import { isCompleteUserProfile, USER_PROFILE_STORAGE_KEY } from "@/lib/user-profile";
+import type { SageUserProfile } from "@/lib/user-profile";
 
-type ViewState = "idle" | "dashboard" | "chat" | RoutedView;
+type ViewState = "idle" | "dashboard" | "chat" | "settings" | RoutedView;
 
 const generatedViews = new Set<ViewState>(["quiz", "flashcards", "audio", "report"]);
 
@@ -32,6 +36,33 @@ export default function Home() {
   const [viewState, setViewState] = useState<ViewState>("idle");
   const [generationPrompt, setGenerationPrompt] = useState<string>("");
   const [chatQuery, setChatQuery] = useState<string>("");
+  const [profile, setProfile] = useState<SageUserProfile | null>(null);
+  const [profileLoaded, setProfileLoaded] = useState(false);
+
+  useEffect(() => {
+    const storedProfile = window.localStorage.getItem(USER_PROFILE_STORAGE_KEY);
+    if (storedProfile) {
+      try {
+        const parsedProfile = JSON.parse(storedProfile) as SageUserProfile;
+        if (isCompleteUserProfile(parsedProfile)) {
+          setProfile(parsedProfile);
+        }
+      } catch {
+        window.localStorage.removeItem(USER_PROFILE_STORAGE_KEY);
+      }
+    }
+    setProfileLoaded(true);
+  }, []);
+
+  const saveProfile = (nextProfile: SageUserProfile) => {
+    window.localStorage.setItem(USER_PROFILE_STORAGE_KEY, JSON.stringify(nextProfile));
+    setProfile(nextProfile);
+  };
+
+  const completeSetup = (nextProfile: SageUserProfile) => {
+    saveProfile(nextProfile);
+    setViewState("idle");
+  };
 
   const handleSubmit = (text: string) => {
     const route = detectView(text);
@@ -69,17 +100,33 @@ export default function Home() {
 
   const cardTransition: Transition = { duration: 0.28, ease: [0.25, 0.46, 0.45, 0.94] };
 
+  if (!profileLoaded) {
+    return <main className="min-h-screen w-full bg-[#080807]" />;
+  }
+
+  if (!profile) {
+    return (
+      <main className="relative min-h-screen w-full overflow-hidden bg-[#080807] text-[#ede6d5]">
+        <div className="pointer-events-none absolute inset-x-0 top-[-12rem] h-[36rem] bg-[radial-gradient(circle_at_center,rgba(242,168,93,0.12),transparent_62%)]" />
+        <div className="pointer-events-none absolute right-[-12rem] top-16 h-[32rem] w-[32rem] rounded-full bg-[rgba(171,199,173,0.07)] blur-[110px]" />
+        <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-[1180px] flex-col px-5 py-8 sm:px-8 lg:px-10">
+          <ProfileSetup onComplete={completeSetup} />
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="relative min-h-screen w-full overflow-hidden bg-[#080807] text-[#ede6d5]">
       <div className="pointer-events-none absolute inset-x-0 top-[-12rem] h-[36rem] bg-[radial-gradient(circle_at_center,rgba(242,168,93,0.12),transparent_62%)]" />
       <div className="pointer-events-none absolute right-[-12rem] top-16 h-[32rem] w-[32rem] rounded-full bg-[rgba(171,199,173,0.07)] blur-[110px]" />
       <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-[1180px] flex-col px-5 py-8 sm:px-8 lg:px-10">
-        <TopBar viewState={viewState} onNavigate={setViewState} />
+        <TopBar viewState={viewState} profile={profile} onNavigate={setViewState} />
 
         <AnimatePresence mode="wait">
           {viewState === "idle" && (
             <motion.div key="home" {...cardVariants} transition={cardTransition} className="w-full flex-1">
-              <TomeHome onSubmit={handleSubmit} onNavigate={setViewState} />
+              <TomeHome profile={profile} onSubmit={handleSubmit} onNavigate={setViewState} />
             </motion.div>
           )}
 
@@ -136,13 +183,27 @@ export default function Home() {
               <ChatWidget initialQuery={chatQuery} onCommand={handleChatCommand} />
             </FocusShell>
           )}
+
+          {viewState === "settings" && (
+            <FocusShell keyName="settings" variants={cardVariants} transition={cardTransition} onBack={handleBack}>
+              <SettingsPanel profile={profile} onSave={saveProfile} onBack={handleBack} />
+            </FocusShell>
+          )}
         </AnimatePresence>
       </div>
     </main>
   );
 }
 
-function TopBar({ viewState, onNavigate }: { viewState: ViewState; onNavigate: (view: ViewState) => void }) {
+function TopBar({
+  viewState,
+  profile,
+  onNavigate,
+}: {
+  viewState: ViewState;
+  profile: SageUserProfile;
+  onNavigate: (view: ViewState) => void;
+}) {
   return (
     <header className="flex flex-col gap-4 pb-8 sm:flex-row sm:items-center sm:justify-between">
       <button
@@ -152,7 +213,7 @@ function TopBar({ viewState, onNavigate }: { viewState: ViewState; onNavigate: (
         <span className="grid h-8 w-8 place-items-center rounded-full border border-[#f2a85d]/20 bg-[#f2a85d]/10 text-[#f2a85d]">
           ✦
         </span>
-        <span>Sage · Tome Home</span>
+        <span>Sage · {profile.name}</span>
       </button>
 
       <nav className="flex w-full gap-1 overflow-x-auto rounded-full border border-white/10 bg-[#11110f]/70 p-1 backdrop-blur sm:w-fit">
@@ -160,12 +221,21 @@ function TopBar({ viewState, onNavigate }: { viewState: ViewState; onNavigate: (
         <NavPill active={viewState === "dashboard"} onClick={() => onNavigate("dashboard")}>Dashboard</NavPill>
         <NavPill active={viewState === "history"} onClick={() => onNavigate("history")}>History</NavPill>
         <NavPill active={viewState === "tomes"} onClick={() => onNavigate("tomes")}>Tomes</NavPill>
+        <NavPill active={viewState === "settings"} onClick={() => onNavigate("settings")}>Settings</NavPill>
       </nav>
     </header>
   );
 }
 
-function TomeHome({ onSubmit, onNavigate }: { onSubmit: (text: string) => void; onNavigate: (view: ViewState) => void }) {
+function TomeHome({
+  profile,
+  onSubmit,
+  onNavigate,
+}: {
+  profile: SageUserProfile;
+  onSubmit: (text: string) => void;
+  onNavigate: (view: ViewState) => void;
+}) {
   const [prompt, setPrompt] = useState("");
 
   const submitPrompt = () => {
@@ -196,10 +266,10 @@ function TomeHome({ onSubmit, onNavigate }: { onSubmit: (text: string) => void; 
         </div>
 
         <h1 className="font-serif text-[clamp(2.8rem,7vw,5.4rem)] font-normal leading-[0.96] tracking-[-0.05em]">
-          What should this Tome help with next?
+          Welcome back, {profile.name}.
         </h1>
         <p className="mx-auto mt-5 max-w-[650px] text-base leading-7 text-[#9f9788]">
-          Ask questions, generate study materials, manage sources, or jump into focused work for this Tome.
+          What should this Tome help with next? Ask questions, generate study materials, manage sources, or jump into focused work.
         </p>
 
         <button

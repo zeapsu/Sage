@@ -1,5 +1,7 @@
 # Stitch.io Prompt — Sage Floating UI
 
+> **Archive/design reference:** Original prompt for the floating Ethereal Console direction. Tome Home is now the default UI; use this as inspiration, not as current app structure.
+
 Use this as the initial prompt for stitch.io. Paste directly into the tool.
 Adjust based on what Stitch outputs — this is a starting point, iterate from here.
 

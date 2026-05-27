@@ -1,5 +1,7 @@
 ## Project Setup
 
+> **Status note (May 2026):** Archived early TODO from the arXivSage / Electron-era project. Sage is now Tauri + Next.js + FastAPI with Tome Home as the default UI. Keep this file for history only.
+
 - [x] **Initialize FastAPI backend**
   - Set up Python environment (`venv`) and install FastAPI, Uvicorn[^1]
   - Create basic "Hello World" API endpoint[^1]

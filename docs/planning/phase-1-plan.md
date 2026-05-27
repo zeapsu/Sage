@@ -2,9 +2,11 @@
 
 > **Goal:** Build the foundation: SQLite knowledge store, provider abstraction, agent orchestrator, skill registry, embeddings, and the floating window shell.
 
+> **Status note (May 2026):** Historical implementation plan. The current branch should treat README and [`session-context.md`](session-context.md) as product truth. Do not replay these steps blindly; many files already exist and Tome Home is now the default UI.
+
 > **For:** Claude Code, Codex, or any coding agent. Follow tasks sequentially. Each task is 2-5 minutes.
 
-> **Read first:** `BRAINSTORM.md`, `DESIGN.md` — full architecture and design spec.
+> **Read first:** [`../product/vision.md`](../product/vision.md), [`../design/ethereal-console.md`](../design/ethereal-console.md) — architecture direction and design spec.
 
 ---
 
@@ -344,7 +346,7 @@ git commit -m "feat: SQLite knowledge store (documents, chunks, collections, ses
 
 ## Task 2: Design Tokens — Tailwind Config
 
-**Objective:** Replace the generic Tailwind config with the Sage "Ethereal Console" design tokens from DESIGN.md.
+**Objective:** Replace the generic Tailwind config with the Sage "Ethereal Console" design tokens from [`../design/ethereal-console.md`](../design/ethereal-console.md).
 
 **Files:**
 - Modify: `frontend/tailwind.config.js` (full rewrite)
