@@ -9,7 +9,8 @@
     "lint": "next lint",
     "test:routing": "node scripts/test-command-routing.mjs",
     "test:api-client": "node scripts/test-sage-api.mjs",
-    "test:smoke": "npm run test:routing && npm run test:api-client",
+    "test:profile": "node scripts/test-user-profile.mjs",
+    "test:smoke": "npm run test:routing && npm run test:api-client && npm run test:profile",
     "tauri": "tauri",
     "tauri:dev": "tauri dev",
     "tauri:build": "tauri build"

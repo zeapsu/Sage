@@ -16,7 +16,7 @@ import SettingsPanel from "@/components/SettingsPanel";
 import TomeSelector from "@/components/TomeSelector";
 import { detectView } from "@/lib/command-routing";
 import type { RoutedView } from "@/lib/command-routing";
-import { isCompleteUserProfile, USER_PROFILE_STORAGE_KEY } from "@/lib/user-profile";
+import { readStoredUserProfile, USER_PROFILE_STORAGE_KEY } from "@/lib/user-profile";
 import type { SageUserProfile } from "@/lib/user-profile";
 
 type ViewState = "idle" | "dashboard" | "chat" | "settings" | RoutedView;
@@ -40,16 +40,9 @@ export default function Home() {
   const [profileLoaded, setProfileLoaded] = useState(false);
 
   useEffect(() => {
-    const storedProfile = window.localStorage.getItem(USER_PROFILE_STORAGE_KEY);
+    const storedProfile = readStoredUserProfile(window.localStorage);
     if (storedProfile) {
-      try {
-        const parsedProfile = JSON.parse(storedProfile) as SageUserProfile;
-        if (isCompleteUserProfile(parsedProfile)) {
-          setProfile(parsedProfile);
-        }
-      } catch {
-        window.localStorage.removeItem(USER_PROFILE_STORAGE_KEY);
-      }
+      setProfile(storedProfile);
     }
     setProfileLoaded(true);
   }, []);
