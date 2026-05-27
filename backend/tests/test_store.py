@@ -1,10 +1,40 @@
 """Tests for the KnowledgeStore — Tomes, documents, chunks, dedup, linking."""
 import pytest
 
+from store.db import KnowledgeStore
 from store.models import Document, Chunk, Tome, Session, Message
 
 
 class TestDocumentCRUD:
+    def test_existing_documents_table_gets_content_hash_column(self, tmp_path):
+        import sqlite3
+
+        db_path = tmp_path / "legacy.db"
+        conn = sqlite3.connect(db_path)
+        conn.execute(
+            """
+            CREATE TABLE documents (
+                id TEXT PRIMARY KEY,
+                title TEXT NOT NULL,
+                source TEXT,
+                source_id TEXT,
+                doc_type TEXT,
+                metadata TEXT DEFAULT '{}',
+                created_at TEXT DEFAULT (datetime('now')),
+                updated_at TEXT DEFAULT (datetime('now'))
+            )
+            """
+        )
+        conn.commit()
+        conn.close()
+
+        migrated = KnowledgeStore(db_path=db_path)
+        try:
+            columns = {row[1] for row in migrated.conn.execute("PRAGMA table_info(documents)")}
+            assert "content_hash" in columns
+        finally:
+            migrated.close()
+
     def test_add_and_get(self, store):
         doc = Document(title="Test Paper", source="upload", doc_type="pdf", content_hash="abc123")
         store.add_document(doc)
@@ -168,6 +198,24 @@ class TestDedupWorkflow:
 
 
 class TestSessions:
+    def test_list_sessions_clamps_negative_limit(self, store):
+        for i in range(3):
+            session = store.create_session("ollama", "llama3.1:8b")
+            store.add_message(Message(session_id=session.id, role="user", content=f"hello {i}"))
+
+        sessions = store.list_sessions(limit=-1)
+
+        assert len(sessions) == 1
+
+    def test_list_sessions_clamps_large_limit(self, store):
+        for i in range(3):
+            session = store.create_session("ollama", "llama3.1:8b")
+            store.add_message(Message(session_id=session.id, role="user", content=f"hello {i}"))
+
+        sessions = store.list_sessions(limit=10_000)
+
+        assert len(sessions) == 3
+
     def test_create_session_with_tome(self, store):
         tome = store.create_tome("Tome")
         session = store.create_session("ollama", "llama3.1:8b", tome_id=tome.id)

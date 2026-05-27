@@ -21,6 +21,13 @@ interface AudioTrack {
 
 interface AudioPlayerWidgetProps {
   track: AudioTrack;
+  /** Direct URL to a synthesized audio file (e.g. OpenAI TTS MP3). When
+   *  provided, a real <audio> element drives playback. When null/undefined
+   *  the widget falls back to browser SpeechSynthesis. */
+  audioUrl?: string | null;
+  /** Full narration script — used for SpeechSynthesis fallback when no
+   *  audioUrl is available. If absent the concatenated transcript is used. */
+  script?: string;
 }
 
 // --- Sample data for prototyping ---
@@ -92,35 +99,68 @@ function formatTime(seconds: number): string {
 
 // --- Component ---
 
-export default function AudioPlayerWidget({ track }: AudioPlayerWidgetProps) {
+export default function AudioPlayerWidget({ track, audioUrl, script }: AudioPlayerWidgetProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [showTranscript, setShowTranscript] = useState(true);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const transcriptRef = useRef<HTMLDivElement>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const speechRef = useRef<SpeechSynthesisUtterance | null>(null);
+  const speechStartRef = useRef<number>(0);
+  const speechBaseTimeRef = useRef<number>(0);
 
-  // Simulate playback with a timer
+  // --- Mode A: real <audio> element (server-side TTS available) ---
   useEffect(() => {
+    if (!audioUrl) return;
+    const el = audioRef.current;
+    if (!el) return;
+    const onTime = () => setCurrentTime(el.currentTime);
+    const onEnded = () => {
+      setIsPlaying(false);
+      setCurrentTime(el.duration || track.duration);
+    };
+    el.addEventListener("timeupdate", onTime);
+    el.addEventListener("ended", onEnded);
+    return () => {
+      el.removeEventListener("timeupdate", onTime);
+      el.removeEventListener("ended", onEnded);
+    };
+  }, [audioUrl, track.duration]);
+
+  // --- Mode B: SpeechSynthesis fallback. Drive a timer for transcript
+  //     highlighting since the browser API doesn't expose word-level timing. ---
+  useEffect(() => {
+    if (audioUrl) return; // Mode A drives currentTime directly
     if (isPlaying) {
+      speechStartRef.current = performance.now();
       intervalRef.current = setInterval(() => {
-        setCurrentTime((prev) => {
-          if (prev >= track.duration) {
-            setIsPlaying(false);
-            return track.duration;
-          }
-          return prev + 0.1;
-        });
+        const elapsed = (performance.now() - speechStartRef.current) / 1000;
+        const t = speechBaseTimeRef.current + elapsed;
+        if (t >= track.duration) {
+          setCurrentTime(track.duration);
+          setIsPlaying(false);
+        } else {
+          setCurrentTime(t);
+        }
       }, 100);
-    } else {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
+    } else if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
     }
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [isPlaying, track.duration]);
+  }, [isPlaying, audioUrl, track.duration]);
+
+  // Cancel any in-flight speech if the widget unmounts or the track changes.
+  useEffect(() => {
+    return () => {
+      if (typeof window !== "undefined" && "speechSynthesis" in window) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, [track.id]);
 
   // Auto-scroll transcript to active segment
   useEffect(() => {
@@ -133,29 +173,102 @@ export default function AudioPlayerWidget({ track }: AudioPlayerWidgetProps) {
     }
   }, [currentTime, showTranscript]);
 
+  const speechAvailable =
+    typeof window !== "undefined" && "speechSynthesis" in window;
+
+  const speakFromTime = useCallback(
+    (fromTime: number) => {
+      if (!speechAvailable) return;
+      const synth = window.speechSynthesis;
+      synth.cancel();
+
+      // Build the utterance from the segment at fromTime onwards so the
+      // audio you hear lines up with the highlighted transcript.
+      const remaining = track.transcript
+        .filter((s) => s.endTime > fromTime)
+        .map((s) => s.text)
+        .join(" ");
+      const text = remaining || script || track.transcript.map((s) => s.text).join(" ");
+      if (!text.trim()) return;
+
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.rate = 1.0;
+      utter.onend = () => {
+        if (speechRef.current === utter) {
+          setIsPlaying(false);
+          setCurrentTime(track.duration);
+        }
+      };
+      speechRef.current = utter;
+      speechBaseTimeRef.current = fromTime;
+      speechStartRef.current = performance.now();
+      synth.speak(utter);
+    },
+    [speechAvailable, track.transcript, track.duration, script],
+  );
+
   const handlePlayPause = useCallback(() => {
-    if (currentTime >= track.duration) {
-      setCurrentTime(0);
+    if (audioUrl && audioRef.current) {
+      const el = audioRef.current;
+      if (currentTime >= track.duration) {
+        el.currentTime = 0;
+        setCurrentTime(0);
+      }
+      if (el.paused) {
+        void el.play();
+        setIsPlaying(true);
+      } else {
+        el.pause();
+        setIsPlaying(false);
+      }
+      return;
     }
-    setIsPlaying((p) => !p);
-  }, [currentTime, track.duration]);
+
+    // SpeechSynthesis path
+    if (!speechAvailable) return;
+    const synth = window.speechSynthesis;
+    if (isPlaying) {
+      synth.cancel();
+      setIsPlaying(false);
+      return;
+    }
+    if (currentTime >= track.duration) setCurrentTime(0);
+    speakFromTime(currentTime >= track.duration ? 0 : currentTime);
+    setIsPlaying(true);
+  }, [audioUrl, currentTime, track.duration, isPlaying, speechAvailable, speakFromTime]);
+
+  const seekTo = useCallback(
+    (t: number) => {
+      const clamped = Math.max(0, Math.min(track.duration, t));
+      setCurrentTime(clamped);
+      if (audioUrl && audioRef.current) {
+        audioRef.current.currentTime = clamped;
+        return;
+      }
+      // SpeechSynthesis can't truly seek — restart from the new spot if playing.
+      if (isPlaying && speechAvailable) {
+        speakFromTime(clamped);
+      }
+    },
+    [audioUrl, track.duration, isPlaying, speechAvailable, speakFromTime],
+  );
 
   const handleSeek = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
       const rect = e.currentTarget.getBoundingClientRect();
       const pct = (e.clientX - rect.left) / rect.width;
-      setCurrentTime(Math.max(0, Math.min(track.duration, pct * track.duration)));
+      seekTo(pct * track.duration);
     },
-    [track.duration]
+    [track.duration, seekTo],
   );
 
   const handlePrev = useCallback(() => {
-    setCurrentTime((t) => Math.max(0, t - 15));
-  }, []);
+    seekTo(currentTime - 15);
+  }, [seekTo, currentTime]);
 
   const handleNext = useCallback(() => {
-    setCurrentTime((t) => Math.min(track.duration, t + 15));
-  }, [track.duration]);
+    seekTo(currentTime + 15);
+  }, [seekTo, currentTime]);
 
   const progress = track.duration > 0 ? (currentTime / track.duration) * 100 : 0;
 
@@ -165,6 +278,14 @@ export default function AudioPlayerWidget({ track }: AudioPlayerWidgetProps) {
 
   return (
     <div className="w-full max-w-[640px] px-4">
+      {audioUrl && (
+        <audio
+          ref={audioRef}
+          src={audioUrl}
+          preload="auto"
+          className="hidden"
+        />
+      )}
       <div
         className="bg-surface/80 backdrop-blur-[32px] border border-outline-variant/15
                    rounded-2xl p-6
@@ -312,15 +433,29 @@ export default function AudioPlayerWidget({ track }: AudioPlayerWidgetProps) {
               {track.voice}
             </span>
           </div>
-          <button
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-label-sm
-                       border border-outline-variant/15 text-on-surface-variant
-                       hover:border-outline-variant/30 hover:text-on-surface
-                       transition-all duration-150 uppercase tracking-[0.05em]"
-          >
-            <span className="material-symbols-outlined text-sm">download</span>
-            Download
-          </button>
+          {audioUrl ? (
+            <a
+              href={audioUrl}
+              download={`${track.id || "sage-audio"}.mp3`}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-label-sm
+                         border border-outline-variant/15 text-on-surface-variant
+                         hover:border-outline-variant/30 hover:text-on-surface
+                         transition-all duration-150 uppercase tracking-[0.05em]"
+            >
+              <span className="material-symbols-outlined text-sm">download</span>
+              Download
+            </a>
+          ) : (
+            <span
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-label-sm
+                         border border-outline-variant/10 text-on-surface-variant/50
+                         uppercase tracking-[0.05em] cursor-not-allowed"
+              title="Server-side TTS not configured — playback uses your browser's voice."
+            >
+              <span className="material-symbols-outlined text-sm">graphic_eq</span>
+              Browser TTS
+            </span>
+          )}
         </div>
       </div>
     </div>
