@@ -98,6 +98,7 @@ type FetchOpts = {
 };
 
 async function apiFetch<T>(path: string, opts: FetchOpts = {}): Promise<T> {
+  await ensureDesktopBackend();
   const base = getApiBaseUrl();
   const url = `${base}${path}`;
   const res = await fetch(url, {

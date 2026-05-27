@@ -12,18 +12,10 @@ import KnowledgeBaseWidget from "@/components/KnowledgeBaseWidget";
 import QuizView from "@/components/QuizView";
 import ReportView from "@/components/ReportView";
 import TomeSelector from "@/components/TomeSelector";
+import { detectView } from "@/lib/command-routing";
+import type { RoutedView } from "@/lib/command-routing";
 
-type ViewState =
-  | "idle"
-  | "dashboard"
-  | "quiz"
-  | "flashcards"
-  | "audio"
-  | "report"
-  | "history"
-  | "tomes"
-  | "chat"
-  | "knowledge";
+type ViewState = "idle" | "dashboard" | "chat" | RoutedView;
 
 const generatedViews = new Set<ViewState>(["quiz", "flashcards", "audio", "report"]);
 
@@ -35,32 +27,6 @@ const capabilities: Array<{ label: string; icon: string; prompt?: string; view: 
   { label: "Audio", icon: "♪", prompt: "Generate an audio review for this Tome", view: "audio" },
   { label: "Chat", icon: "⌁", view: "chat" },
 ];
-
-/** Map a free-text prompt to a non-chat view, or null if it should go to chat. */
-function detectView(text: string): Exclude<ViewState, "chat" | "idle" | "dashboard"> | null {
-  const lower = text.toLowerCase().trim();
-  if (lower === "/quiz" || lower.includes("quiz") || /\btest(s|ing)?\b/.test(lower)) return "quiz";
-  if (lower === "/flashcards" || lower === "/flashcard" || lower.includes("flashcard") || lower.includes("flash card")) return "flashcards";
-  if (lower === "/audio" || lower.includes("audio") || lower.includes("listen") || lower.includes("podcast")) return "audio";
-  if (lower === "/report" || lower.includes("report") || lower.includes("study guide") || lower.includes("summary")) return "report";
-  if (lower === "/history" || lower.includes("history")) return "history";
-  if (lower === "/tomes" || lower.includes("tome") || lower.includes("collection") || lower.includes("library")) return "tomes";
-  if (
-    lower === "/knowledge" ||
-    lower === "/sources" ||
-    lower === "knowledge" ||
-    lower === "kb" ||
-    lower === "docs" ||
-    lower === "documents" ||
-    lower.includes("knowledge base") ||
-    lower.includes("view documents") ||
-    lower.includes("show documents") ||
-    lower.includes("list documents")
-  ) {
-    return "knowledge";
-  }
-  return null;
-}
 
 export default function Home() {
   const [viewState, setViewState] = useState<ViewState>("idle");
