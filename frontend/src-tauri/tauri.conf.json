@@ -42,7 +42,6 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
-    "identifier": "com.sage.desktop",
     "externalBin": ["binaries/main"]
   },
   "plugins": {
