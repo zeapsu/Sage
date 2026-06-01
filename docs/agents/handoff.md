@@ -26,7 +26,7 @@ This branch keeps the owner-specific greeting and adds the local profile flow ne
 
 - Implemented first-run local profile setup and editable settings while preserving the Tome Home default UI.
 - Added a small local profile utility layer for loading, saving, validating, and normalizing owner profile data.
-- Preserved owner-specific default behavior for the existing owner while making new-user setup explicit.
+- Preserved owner-specific greetings through locally stored setup data instead of a built-in owner profile.
 - Fixed the Tauri config schema issue found during validation.
 - Updated the Tauri desktop window from the old compact command-bar dimensions to a resizable Tome Home-sized window, and enabled macOS transparent-window support.
 - Documented the frontend Node runtime range and added `frontend/.nvmrc` so macOS/dev environments can use Node 22 LTS instead of newer current Node releases that emit upstream `DEP0205` dev warnings.
@@ -49,7 +49,7 @@ This branch keeps the owner-specific greeting and adds the local profile flow ne
 
 - `frontend/src/app/page.tsx`: Tome Home app shell, local setup/profile loading, owner greeting, and routed views.
 - `frontend/src/lib/command-routing.ts`: explicit routing for `/quiz`, `/flashcards`, `/audio`, `/report`, `/history`, `/tomes`, `/knowledge`, `/settings`, etc.
-- `frontend/src/lib/user-profile.ts`: local user profile contract, default owner profile, validation/normalization helpers, and `localStorage` key for owner-specific greetings/settings.
+- `frontend/src/lib/user-profile.ts`: local user profile contract, validation/normalization helpers, and `localStorage` key for owner-specific greetings/settings.
 - `frontend/src/components/ProfileSetup.tsx`: first-run local profile setup flow.
 - `frontend/src/components/SettingsPanel.tsx`: editable local profile/settings surface.
 - `frontend/src/lib/sage-api.ts`: typed API client, browser backend URL, and Tauri sidecar backend startup.

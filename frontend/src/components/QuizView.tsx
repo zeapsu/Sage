@@ -58,7 +58,7 @@ export default function QuizView({ prompt, tomeId, count = 5 }: QuizViewProps) {
   const title = prompt.trim() ? `Quiz: ${prompt.trim()}` : "Quiz";
 
   return (
-    <div className="flex flex-col items-center gap-3">
+    <div className="flex w-full flex-col items-center gap-3">
       <QuizWidget title={title} questions={questions} />
       {sources.length > 0 && <SourcesFooter sources={sources} />}
     </div>

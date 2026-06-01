@@ -58,7 +58,7 @@ export default function FlashcardsView({ prompt, tomeId, count = 6 }: Flashcards
   const title = prompt.trim() ? `Flashcards: ${prompt.trim()}` : "Flashcards";
 
   return (
-    <div className="flex flex-col items-center gap-3">
+    <div className="flex w-full flex-col items-center gap-3">
       <FlashcardWidget title={title} cards={cards} />
       {sources.length > 0 && <SourcesFooter sources={sources} />}
     </div>

@@ -99,7 +99,7 @@ export default function Home() {
 
   if (!profile) {
     return (
-      <main className="relative min-h-screen w-full overflow-hidden bg-[#080807] text-[#ede6d5]">
+      <main className="relative min-h-screen w-full overflow-x-hidden bg-[#080807] text-[#ede6d5]">
         <div className="pointer-events-none absolute inset-x-0 top-[-12rem] h-[36rem] bg-[radial-gradient(circle_at_center,rgba(242,168,93,0.12),transparent_62%)]" />
         <div className="pointer-events-none absolute right-[-12rem] top-16 h-[32rem] w-[32rem] rounded-full bg-[rgba(171,199,173,0.07)] blur-[110px]" />
         <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-[1180px] flex-col px-5 py-8 sm:px-8 lg:px-10">
@@ -110,7 +110,7 @@ export default function Home() {
   }
 
   return (
-    <main className="relative min-h-screen w-full overflow-hidden bg-[#080807] text-[#ede6d5]">
+    <main className="relative min-h-screen w-full overflow-x-hidden bg-[#080807] text-[#ede6d5]">
       <div className="pointer-events-none absolute inset-x-0 top-[-12rem] h-[36rem] bg-[radial-gradient(circle_at_center,rgba(242,168,93,0.12),transparent_62%)]" />
       <div className="pointer-events-none absolute right-[-12rem] top-16 h-[32rem] w-[32rem] rounded-full bg-[rgba(171,199,173,0.07)] blur-[110px]" />
       <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-[1180px] flex-col px-5 py-8 sm:px-8 lg:px-10">
