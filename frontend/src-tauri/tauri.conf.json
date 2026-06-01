@@ -10,15 +10,16 @@
     "beforeBuildCommand": "npm run build"
   },
   "app": {
+    "macOSPrivateApi": true,
     "windows": [
       {
         "label": "main",
         "title": "Sage",
-        "width": 640,
-        "height": 120,
-        "minWidth": 640,
-        "minHeight": 48,
-        "resizable": false,
+        "width": 1180,
+        "height": 820,
+        "minWidth": 900,
+        "minHeight": 640,
+        "resizable": true,
         "fullscreen": false,
         "decorations": false,
         "transparent": true,
@@ -42,7 +43,6 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
-    "identifier": "com.sage.desktop",
     "externalBin": ["binaries/main"]
   },
   "plugins": {

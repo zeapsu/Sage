@@ -1,5 +1,7 @@
 # Legacy Component Cleanup Plan
 
+> **Archive note (May 2026):** Preserved for reference. This docs branch does not remove application code. Verify imports and current product priorities before acting on any deletion plan.
+
 ## Finding: All 7 legacy components are ORPHANED
 
 None of the legacy components are imported or used in `page.tsx` or anywhere else in the app. They're dead code from the pre-Ethereal architecture.

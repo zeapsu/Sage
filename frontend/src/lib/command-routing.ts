@@ -1,4 +1,4 @@
-export type RoutedView = "quiz" | "flashcards" | "audio" | "report" | "history" | "tomes" | "knowledge";
+export type RoutedView = "quiz" | "flashcards" | "audio" | "report" | "history" | "tomes" | "knowledge" | "settings";
 
 const slashCommands: Record<string, RoutedView> = {
   "/quiz": "quiz",
@@ -16,6 +16,8 @@ const slashCommands: Record<string, RoutedView> = {
   "/knowledge": "knowledge",
   "/sources": "knowledge",
   "/docs": "knowledge",
+  "/settings": "settings",
+  "/profile": "settings",
 };
 
 const chipPrompts: Record<string, RoutedView> = {

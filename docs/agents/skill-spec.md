@@ -1,13 +1,31 @@
 # Sage Agent Skill Specification
 
-> The contract between backend skills and frontend UI components.
-> Each skill produces a `SkillResult` with a `ui_component` field that tells the frontend which card to render.
+> The contract between backend skills and frontend UI/components.
+> Product truth: Tome Home is the default UI, ordinary questions stay in chat, and only explicit slash commands / first-party capability chips route to generated views.
 
 ---
 
 ## 1. Architecture Overview
 
+Sage's current implementation is a hybrid of direct routed UI views and backend skills. The next likely roadmap is deeper BYOA / bring-your-own-agent integration, where an external or local agent can call Sage-provided skills while Sage keeps control of source access, grounding, and UI rendering.
+
+```text
+Tome Home / Chat input
+        ↓
+Explicit command routing (`frontend/src/lib/command-routing.ts`)
+        ↓                         ↘
+Focused UI view               Chat / agent loop
+        ↓                         ↓
+Frontend API client       Backend skill registry
+        ↓                         ↓
+Generated artifact        SkillResult / structured data
+        ↓                         ↓
+Ethereal/Tome Home UI renders grounded output
 ```
+
+Historical/target agent loop:
+
+```text
 User Query → Agent Orchestrator → LLM selects tool → Skill executes → SkillResult
                                                                     ↓
                                                          ┌─────────────────────┐
@@ -17,7 +35,7 @@ User Query → Agent Orchestrator → LLM selects tool → Skill executes → Sk
                                                          └──────────┬──────────┘
                                                                     ↓
                                                          Frontend renders the
-                                                         matching React card
+                                                         matching React card/view
 ```
 
 ### SkillResult Contract
@@ -56,40 +74,45 @@ When a `SkillResult` arrives:
 
 ## 2. Component Inventory
 
-### 2.1 Ethereal Console Components (DESIGN.md compliant ✅)
+### 2.1 Current Tome Home / Ethereal Components
 
-These 8 components follow the glassmorphic "Ethereal Console" design system — dark surfaces, `backdrop-blur-[32px]`, design tokens (`bg-surface`, `text-primary`, etc.), Material Symbols, `max-w-[640px]`.
+These components are the current user-facing direction. Tome Home (`frontend/src/app/page.tsx`) routes to focused views directly; backend skills should target these surfaces rather than the old arXiv feed.
 
-| # | Component | File | Status | Description |
-|---|-----------|------|--------|-------------|
-| 1 | **CommandBar** | `CommandBar.tsx` | ✅ Ready | Pill input bar (600×48px), sparkle icon, provider badge. The entry point. |
-| 2 | **ChatWidget** | `ChatWidget.tsx` | ✅ Ready | Chat card with message bubbles, typing indicator, auto-scroll. Has sample data. |
-| 3 | **QuizWidget** | `QuizWidget.tsx` | ✅ Ready | Interactive quiz with progress dots, confirm/skip flow, completion ring. |
-| 4 | **FlashcardWidget** | `FlashcardWidget.tsx` | ✅ Ready | 3D flip cards (Framer Motion), shuffle/reset, keyboard nav (arrows + space). |
-| 5 | **AudioPlayerWidget** | `AudioPlayerWidget.tsx` | ✅ Ready | Audio controls, gradient progress bar, transcript with word-highlight. |
-| 6 | **ReportViewWidget** | `ReportViewWidget.tsx` | ✅ Ready | Markdown report with sidebar TOC, KaTeX math, copy/MD/PDF export. |
-| 7 | **HistoryPanel** | `HistoryPanel.tsx` | ✅ Ready | Searchable history with type filter pills, grouped by time. |
-| 8 | **TomeSelector** | `TomeSelector.tsx` | ✅ Ready | Tome picker with search, active state, color-coded icons. |
+| Component | File | Current role |
+|-----------|------|--------------|
+| **Tome Home shell** | `frontend/src/app/page.tsx` | Default UI, capability chips, explicit routing, top-level navigation. |
+| **KnowledgeBaseWidget** | `KnowledgeBaseWidget.tsx` | Sources/documents surface and upload entry point. |
+| **TomeSelector** | `TomeSelector.tsx` | Tome selection/management surface. |
+| **ChatWidget** | `ChatWidget.tsx` | Natural-language chat surface; can hand explicit slash commands back to router. |
+| **QuizView / QuizWidget** | `QuizView.tsx`, `QuizWidget.tsx` | Generated quiz artifact view and interactive card component. |
+| **FlashcardsView / FlashcardWidget** | `FlashcardsView.tsx`, `FlashcardWidget.tsx` | Generated flashcard artifact view and card component. |
+| **AudioView / AudioPlayerWidget** | `AudioView.tsx`, `AudioPlayerWidget.tsx` | Generated audio review/narration view and player component. |
+| **ReportView / ReportViewWidget** | `ReportView.tsx`, `ReportViewWidget.tsx` | Generated report artifact view and markdown/report component. |
+| **HistoryPanel** | `HistoryPanel.tsx` | History surface. |
+| **ProfileSetup** | `ProfileSetup.tsx` | First-run local profile setup for owner-specific greetings and user details. |
+| **SettingsPanel** | `SettingsPanel.tsx` | Editable local profile/settings surface. |
+| **UploadModal** | `UploadModal.tsx` | Source upload modal. |
+| **CommandBar** | `CommandBar.tsx` | Earlier compact command bar component; still aligned with Ethereal Console direction. |
 
-### 2.2 Legacy Components (pre-Ethereal design ⚠️)
+### 2.2 Legacy Components (pre-Ethereal / arXiv-feed design ⚠️)
 
-These 7 components use the old design system (hardcoded `gray-900`, `blue-500`, `text-white`). They work but don't match the Ethereal Console aesthetic.
+These components exist in the tree but are not the current product center. Do not treat them as the target architecture.
 
-| # | Component | File | Status | Description |
-|---|-----------|------|--------|-------------|
-| 9 | **TomeList** | `TomeList.tsx` | ⚠️ Legacy | Older tome manager with real API integration (`sage-api.ts`). **Superseded by TomeSelector** for UI, but has working CRUD. Needs merge. |
-| 10 | **KeywordSearch** | `KeywordSearch.tsx` | ⚠️ Legacy | Keyword search → backend summarize endpoint. Uses axios. Old blue/white styling. |
-| 11 | **SearchBar** | `SearchBar.tsx` | ⚠️ Legacy | Generic search input with `minimal` mode. Hardcoded `gray-900`/`blue-600`. |
-| 12 | **TableOfContents** | `TableOfContents.tsx` | ⚠️ Legacy | Simple TOC sidebar for papers. Hardcoded `text-white`/`text-blue-400`. |
-| 13 | **Feed** | `Feed.tsx` | ⚠️ Legacy | Paper feed with IntersectionObserver tracking. Generic styling. |
-| 14 | **Post** | `Post.tsx` | ⚠️ Legacy | Paper card with author avatar, markdown summary, Like/Comment actions. |
-| 15 | **LoadingSpinner** | `LoadingSpinner.tsx` | ⚠️ Legacy | Simple spinner + message. Hardcoded `blue-400`/`gray-300`. |
+| Component | File | Status | Description |
+|-----------|------|--------|-------------|
+| **TomeList** | `TomeList.tsx` | ⚠️ Legacy | Older tome manager with real API integration (`sage-api.ts`). Superseded visually by TomeSelector. |
+| **KeywordSearch** | `KeywordSearch.tsx` | ⚠️ Legacy | Keyword search → backend summarize endpoint. Uses old styling. |
+| **SearchBar** | `SearchBar.tsx` | ⚠️ Legacy | Generic old search input. |
+| **TableOfContents** | `TableOfContents.tsx` | ⚠️ Legacy | Simple old paper TOC. |
+| **Feed** | `Feed.tsx` | ⚠️ Legacy | Old paper feed. |
+| **Post** | `Post.tsx` | ⚠️ Legacy | Old paper/social post card. |
+| **LoadingSpinner** | `LoadingSpinner.tsx` | ⚠️ Legacy | Old spinner styling. |
 
 ---
 
 ## 3. Skill-to-Component Mapping
 
-Each skill below defines its `ui_component` and the `data` schema it passes.
+Each skill below defines its `ui_component` and the `data` schema it passes. The names are a target contract for BYOA/agent integration; the current frontend may wrap these widgets in routed `*View` components.
 
 ### 3.1 `search_docs`
 

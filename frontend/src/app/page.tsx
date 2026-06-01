@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { FormEvent, KeyboardEvent, ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import type { Transition, Variants } from "framer-motion";
@@ -9,13 +9,37 @@ import ChatWidget from "@/components/ChatWidget";
 import FlashcardsView from "@/components/FlashcardsView";
 import HistoryPanel from "@/components/HistoryPanel";
 import KnowledgeBaseWidget from "@/components/KnowledgeBaseWidget";
+import ProfileSetup from "@/components/ProfileSetup";
 import QuizView from "@/components/QuizView";
 import ReportView from "@/components/ReportView";
+import SettingsPanel from "@/components/SettingsPanel";
 import TomeSelector from "@/components/TomeSelector";
 import { detectView } from "@/lib/command-routing";
 import type { RoutedView } from "@/lib/command-routing";
+import { readStoredUserProfile, USER_PROFILE_STORAGE_KEY } from "@/lib/user-profile";
+import type { SageUserProfile } from "@/lib/user-profile";
 
-type ViewState = "idle" | "dashboard" | "chat" | RoutedView;
+type ViewState = "idle" | "dashboard" | "chat" | "settings" | RoutedView;
+
+type TauriWindowHandle = {
+  minimize?: () => Promise<void>;
+  maximize?: () => Promise<void>;
+  unmaximize?: () => Promise<void>;
+  toggleMaximize?: () => Promise<void>;
+  isMaximized?: () => Promise<boolean>;
+  close?: () => Promise<void>;
+};
+
+declare global {
+  interface Window {
+    __TAURI__?: {
+      window?: {
+        appWindow?: TauriWindowHandle;
+        getCurrentWindow?: () => TauriWindowHandle;
+      };
+    };
+  }
+}
 
 const generatedViews = new Set<ViewState>(["quiz", "flashcards", "audio", "report"]);
 
@@ -32,6 +56,26 @@ export default function Home() {
   const [viewState, setViewState] = useState<ViewState>("idle");
   const [generationPrompt, setGenerationPrompt] = useState<string>("");
   const [chatQuery, setChatQuery] = useState<string>("");
+  const [profile, setProfile] = useState<SageUserProfile | null>(null);
+  const [profileLoaded, setProfileLoaded] = useState(false);
+
+  useEffect(() => {
+    const storedProfile = readStoredUserProfile(window.localStorage);
+    if (storedProfile) {
+      setProfile(storedProfile);
+    }
+    setProfileLoaded(true);
+  }, []);
+
+  const saveProfile = (nextProfile: SageUserProfile) => {
+    window.localStorage.setItem(USER_PROFILE_STORAGE_KEY, JSON.stringify(nextProfile));
+    setProfile(nextProfile);
+  };
+
+  const completeSetup = (nextProfile: SageUserProfile) => {
+    saveProfile(nextProfile);
+    setViewState("idle");
+  };
 
   const handleSubmit = (text: string) => {
     const route = detectView(text);
@@ -69,17 +113,35 @@ export default function Home() {
 
   const cardTransition: Transition = { duration: 0.28, ease: [0.25, 0.46, 0.45, 0.94] };
 
+  if (!profileLoaded) {
+    return <main className="min-h-screen w-full bg-[#080807]" />;
+  }
+
+  if (!profile) {
+    return (
+      <main className="relative min-h-screen w-full overflow-x-hidden bg-[#080807] text-[#ede6d5]">
+        <WindowChrome />
+        <div className="pointer-events-none absolute inset-x-0 top-[-12rem] h-[36rem] bg-[radial-gradient(circle_at_center,rgba(242,168,93,0.12),transparent_62%)]" />
+        <div className="pointer-events-none absolute right-[-12rem] top-16 h-[32rem] w-[32rem] rounded-full bg-[rgba(171,199,173,0.07)] blur-[110px]" />
+        <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-[1180px] flex-col px-5 pb-8 pt-12 sm:px-8 lg:px-10">
+          <ProfileSetup onComplete={completeSetup} />
+        </div>
+      </main>
+    );
+  }
+
   return (
-    <main className="relative min-h-screen w-full overflow-hidden bg-[#080807] text-[#ede6d5]">
+    <main className="relative min-h-screen w-full overflow-x-hidden bg-[#080807] text-[#ede6d5]">
+      <WindowChrome />
       <div className="pointer-events-none absolute inset-x-0 top-[-12rem] h-[36rem] bg-[radial-gradient(circle_at_center,rgba(242,168,93,0.12),transparent_62%)]" />
       <div className="pointer-events-none absolute right-[-12rem] top-16 h-[32rem] w-[32rem] rounded-full bg-[rgba(171,199,173,0.07)] blur-[110px]" />
-      <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-[1180px] flex-col px-5 py-8 sm:px-8 lg:px-10">
-        <TopBar viewState={viewState} onNavigate={setViewState} />
+      <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-[1180px] flex-col px-5 pb-8 pt-12 sm:px-8 lg:px-10">
+        <TopBar viewState={viewState} profile={profile} onNavigate={setViewState} />
 
         <AnimatePresence mode="wait">
           {viewState === "idle" && (
             <motion.div key="home" {...cardVariants} transition={cardTransition} className="w-full flex-1">
-              <TomeHome onSubmit={handleSubmit} onNavigate={setViewState} />
+              <TomeHome profile={profile} onSubmit={handleSubmit} onNavigate={setViewState} />
             </motion.div>
           )}
 
@@ -136,13 +198,102 @@ export default function Home() {
               <ChatWidget initialQuery={chatQuery} onCommand={handleChatCommand} />
             </FocusShell>
           )}
+
+          {viewState === "settings" && (
+            <FocusShell keyName="settings" variants={cardVariants} transition={cardTransition} onBack={handleBack}>
+              <SettingsPanel profile={profile} onSave={saveProfile} onBack={handleBack} />
+            </FocusShell>
+          )}
         </AnimatePresence>
       </div>
     </main>
   );
 }
 
-function TopBar({ viewState, onNavigate }: { viewState: ViewState; onNavigate: (view: ViewState) => void }) {
+function getTauriWindow(): TauriWindowHandle | null {
+  if (typeof window === "undefined") return null;
+  const tauriWindow = window.__TAURI__?.window;
+  return tauriWindow?.getCurrentWindow?.() ?? tauriWindow?.appWindow ?? null;
+}
+
+async function toggleMaximizeWindow(appWindow: TauriWindowHandle) {
+  if (appWindow.toggleMaximize) {
+    await appWindow.toggleMaximize();
+    return;
+  }
+
+  const isMaximized = await appWindow.isMaximized?.();
+  if (isMaximized && appWindow.unmaximize) {
+    await appWindow.unmaximize();
+    return;
+  }
+  await appWindow.maximize?.();
+}
+
+function WindowChrome() {
+  const runWindowAction = (action: "minimize" | "maximize" | "close") => {
+    const appWindow = getTauriWindow();
+    if (!appWindow) return;
+
+    if (action === "minimize") void appWindow.minimize?.();
+    if (action === "maximize") void toggleMaximizeWindow(appWindow);
+    if (action === "close") void appWindow.close?.();
+  };
+
+  return (
+    <div className="fixed inset-x-0 top-0 z-50 flex h-10 items-center justify-end bg-[#080807]/55 px-2 backdrop-blur-md">
+      <div data-tauri-drag-region className="absolute inset-0" />
+      <div className="relative flex items-center gap-1" aria-label="Window controls">
+        <WindowControlButton label="Minimize window" onClick={() => runWindowAction("minimize")}>
+          −
+        </WindowControlButton>
+        <WindowControlButton label="Maximize window" onClick={() => runWindowAction("maximize")}>
+          □
+        </WindowControlButton>
+        <WindowControlButton label="Close window" onClick={() => runWindowAction("close")} tone="danger">
+          ×
+        </WindowControlButton>
+      </div>
+    </div>
+  );
+}
+
+function WindowControlButton({
+  label,
+  onClick,
+  children,
+  tone = "default",
+}: {
+  label: string;
+  onClick: () => void;
+  children: ReactNode;
+  tone?: "default" | "danger";
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      onClick={onClick}
+      className={`grid h-7 w-9 place-items-center rounded-full border text-sm transition-colors ${
+        tone === "danger"
+          ? "border-[#ffb4ab]/20 text-[#ffb4ab] hover:bg-[#ffb4ab]/15"
+          : "border-white/10 text-[#9f9788] hover:bg-white/10 hover:text-[#ede6d5]"
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
+
+function TopBar({
+  viewState,
+  profile,
+  onNavigate,
+}: {
+  viewState: ViewState;
+  profile: SageUserProfile;
+  onNavigate: (view: ViewState) => void;
+}) {
   return (
     <header className="flex flex-col gap-4 pb-8 sm:flex-row sm:items-center sm:justify-between">
       <button
@@ -152,7 +303,7 @@ function TopBar({ viewState, onNavigate }: { viewState: ViewState; onNavigate: (
         <span className="grid h-8 w-8 place-items-center rounded-full border border-[#f2a85d]/20 bg-[#f2a85d]/10 text-[#f2a85d]">
           ✦
         </span>
-        <span>Sage · Tome Home</span>
+        <span>Sage · {profile.name}</span>
       </button>
 
       <nav className="flex w-full gap-1 overflow-x-auto rounded-full border border-white/10 bg-[#11110f]/70 p-1 backdrop-blur sm:w-fit">
@@ -160,12 +311,21 @@ function TopBar({ viewState, onNavigate }: { viewState: ViewState; onNavigate: (
         <NavPill active={viewState === "dashboard"} onClick={() => onNavigate("dashboard")}>Dashboard</NavPill>
         <NavPill active={viewState === "history"} onClick={() => onNavigate("history")}>History</NavPill>
         <NavPill active={viewState === "tomes"} onClick={() => onNavigate("tomes")}>Tomes</NavPill>
+        <NavPill active={viewState === "settings"} onClick={() => onNavigate("settings")}>Settings</NavPill>
       </nav>
     </header>
   );
 }
 
-function TomeHome({ onSubmit, onNavigate }: { onSubmit: (text: string) => void; onNavigate: (view: ViewState) => void }) {
+function TomeHome({
+  profile,
+  onSubmit,
+  onNavigate,
+}: {
+  profile: SageUserProfile;
+  onSubmit: (text: string) => void;
+  onNavigate: (view: ViewState) => void;
+}) {
   const [prompt, setPrompt] = useState("");
 
   const submitPrompt = () => {
@@ -196,10 +356,10 @@ function TomeHome({ onSubmit, onNavigate }: { onSubmit: (text: string) => void; 
         </div>
 
         <h1 className="font-serif text-[clamp(2.8rem,7vw,5.4rem)] font-normal leading-[0.96] tracking-[-0.05em]">
-          What should this Tome help with next?
+          Welcome back, {profile.name}.
         </h1>
         <p className="mx-auto mt-5 max-w-[650px] text-base leading-7 text-[#9f9788]">
-          Ask questions, generate study materials, manage sources, or jump into focused work for this Tome.
+          What should this Tome help with next? Ask questions, generate study materials, manage sources, or jump into focused work.
         </p>
 
         <button

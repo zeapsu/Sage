@@ -12,6 +12,8 @@ const routes = [
   ["/tomes", "tomes"],
   ["/knowledge", "knowledge"],
   ["/sources", "knowledge"],
+  ["/settings", "settings"],
+  ["/profile", "settings"],
 ];
 
 for (const [input, expected] of routes) {

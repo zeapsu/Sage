@@ -2,6 +2,8 @@
 
 > **Goal**: Transform from a RAG-only arXiv summarizer into a local "NotebookLM-like" knowledge app with BYOA (Bring Your Own Agent) and a skill/tool system.
 
+> **Status note (May 2026):** This is a product vision / historical brainstorm, not an exact inventory of the current code. Current truth: Tome Home is the default UI, local SQLite-backed knowledge/Tome APIs exist, arXiv is legacy/discovery support, and the next roadmap emphasis is deeper BYOA while preserving explicit slash-command routing and Ethereal Console direction.
+
 ---
 
 ## Current State (What We Have)
@@ -406,7 +408,7 @@ Eventually users could add custom skills via a simple plugin directory:
 
 ## Layer 4: Frontend UI
 
-> **📋 Full design spec:** See `DESIGN.md` — generated from Stitch.io "Ethereal Console" mockup.
+> **📋 Full design spec:** See [`../design/ethereal-console.md`](../design/ethereal-console.md) — generated from Stitch.io "Ethereal Console" mockup.
 
 ### The Raycast-Style Floating UI
 

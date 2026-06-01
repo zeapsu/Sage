@@ -67,7 +67,7 @@ export default function AudioView({ prompt, tomeId, voice }: AudioViewProps) {
   const audioUrl = data.audio_url ? resolveAudioUrl(data.audio_url) : null;
 
   return (
-    <div className="flex flex-col items-center gap-3">
+    <div className="flex w-full flex-col items-center gap-3">
       <AudioPlayerWidget track={track} audioUrl={audioUrl} script={data.script} />
       {data.sources.length > 0 && <SourcesFooter sources={data.sources} />}
     </div>

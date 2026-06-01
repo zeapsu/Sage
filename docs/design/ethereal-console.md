@@ -1,6 +1,8 @@
-# DESIGN.md — Sage UI/UX Specification
+# Sage Ethereal Console UI/UX Specification
 
 > Based on Stitch.io output "Ethereal Console" — refined and expanded for implementation.
+
+> **Status note (May 2026):** Ethereal Console remains the design direction, but Tome Home is the current default UI. Apply this spec as a visual/interaction language for Tome Home and focused views rather than replacing the current source-first landing experience.
 
 ---
 
