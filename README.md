@@ -6,6 +6,8 @@ Sage is a Tauri + Next.js + FastAPI app for working with a personal knowledge ba
 
 ## Product Truth
 
+> **Strategic pause note:** Sage should be treated as a paused or low-compute prototype unless its target narrows beyond a generic consumer NotebookLM clone. See [`docs/product/strategic-pause.md`](docs/product/strategic-pause.md) for the rationale.
+
 Sage is no longer centered on an Instagram-style arXiv summarizer. arXiv search and paper summarization remain useful discovery/import paths, but the main product is user-owned local knowledge:
 
 - **Bring your own sources**: text, Markdown, PDFs, pasted notes, and eventually web/vault syncs.
