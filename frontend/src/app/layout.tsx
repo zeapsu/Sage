@@ -18,7 +18,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           rel="stylesheet"
         />
       </head>
-      <body className="min-h-screen w-full bg-transparent overflow-hidden font-body text-on-surface antialiased">
+      <body className="min-h-screen w-full overflow-x-hidden bg-transparent font-body text-on-surface antialiased">
         {children}
       </body>
     </html>

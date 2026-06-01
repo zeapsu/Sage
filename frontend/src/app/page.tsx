@@ -21,6 +21,26 @@ import type { SageUserProfile } from "@/lib/user-profile";
 
 type ViewState = "idle" | "dashboard" | "chat" | "settings" | RoutedView;
 
+type TauriWindowHandle = {
+  minimize?: () => Promise<void>;
+  maximize?: () => Promise<void>;
+  unmaximize?: () => Promise<void>;
+  toggleMaximize?: () => Promise<void>;
+  isMaximized?: () => Promise<boolean>;
+  close?: () => Promise<void>;
+};
+
+declare global {
+  interface Window {
+    __TAURI__?: {
+      window?: {
+        appWindow?: TauriWindowHandle;
+        getCurrentWindow?: () => TauriWindowHandle;
+      };
+    };
+  }
+}
+
 const generatedViews = new Set<ViewState>(["quiz", "flashcards", "audio", "report"]);
 
 const capabilities: Array<{ label: string; icon: string; prompt?: string; view: ViewState }> = [
@@ -100,9 +120,10 @@ export default function Home() {
   if (!profile) {
     return (
       <main className="relative min-h-screen w-full overflow-x-hidden bg-[#080807] text-[#ede6d5]">
+        <WindowChrome />
         <div className="pointer-events-none absolute inset-x-0 top-[-12rem] h-[36rem] bg-[radial-gradient(circle_at_center,rgba(242,168,93,0.12),transparent_62%)]" />
         <div className="pointer-events-none absolute right-[-12rem] top-16 h-[32rem] w-[32rem] rounded-full bg-[rgba(171,199,173,0.07)] blur-[110px]" />
-        <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-[1180px] flex-col px-5 py-8 sm:px-8 lg:px-10">
+        <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-[1180px] flex-col px-5 pb-8 pt-12 sm:px-8 lg:px-10">
           <ProfileSetup onComplete={completeSetup} />
         </div>
       </main>
@@ -111,9 +132,10 @@ export default function Home() {
 
   return (
     <main className="relative min-h-screen w-full overflow-x-hidden bg-[#080807] text-[#ede6d5]">
+      <WindowChrome />
       <div className="pointer-events-none absolute inset-x-0 top-[-12rem] h-[36rem] bg-[radial-gradient(circle_at_center,rgba(242,168,93,0.12),transparent_62%)]" />
       <div className="pointer-events-none absolute right-[-12rem] top-16 h-[32rem] w-[32rem] rounded-full bg-[rgba(171,199,173,0.07)] blur-[110px]" />
-      <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-[1180px] flex-col px-5 py-8 sm:px-8 lg:px-10">
+      <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-[1180px] flex-col px-5 pb-8 pt-12 sm:px-8 lg:px-10">
         <TopBar viewState={viewState} profile={profile} onNavigate={setViewState} />
 
         <AnimatePresence mode="wait">
@@ -185,6 +207,81 @@ export default function Home() {
         </AnimatePresence>
       </div>
     </main>
+  );
+}
+
+function getTauriWindow(): TauriWindowHandle | null {
+  if (typeof window === "undefined") return null;
+  const tauriWindow = window.__TAURI__?.window;
+  return tauriWindow?.getCurrentWindow?.() ?? tauriWindow?.appWindow ?? null;
+}
+
+async function toggleMaximizeWindow(appWindow: TauriWindowHandle) {
+  if (appWindow.toggleMaximize) {
+    await appWindow.toggleMaximize();
+    return;
+  }
+
+  const isMaximized = await appWindow.isMaximized?.();
+  if (isMaximized && appWindow.unmaximize) {
+    await appWindow.unmaximize();
+    return;
+  }
+  await appWindow.maximize?.();
+}
+
+function WindowChrome() {
+  const runWindowAction = (action: "minimize" | "maximize" | "close") => {
+    const appWindow = getTauriWindow();
+    if (!appWindow) return;
+
+    if (action === "minimize") void appWindow.minimize?.();
+    if (action === "maximize") void toggleMaximizeWindow(appWindow);
+    if (action === "close") void appWindow.close?.();
+  };
+
+  return (
+    <div className="fixed inset-x-0 top-0 z-50 flex h-10 items-center justify-end bg-[#080807]/55 px-2 backdrop-blur-md">
+      <div data-tauri-drag-region className="absolute inset-0" />
+      <div className="relative flex items-center gap-1" aria-label="Window controls">
+        <WindowControlButton label="Minimize window" onClick={() => runWindowAction("minimize")}>
+          −
+        </WindowControlButton>
+        <WindowControlButton label="Maximize window" onClick={() => runWindowAction("maximize")}>
+          □
+        </WindowControlButton>
+        <WindowControlButton label="Close window" onClick={() => runWindowAction("close")} tone="danger">
+          ×
+        </WindowControlButton>
+      </div>
+    </div>
+  );
+}
+
+function WindowControlButton({
+  label,
+  onClick,
+  children,
+  tone = "default",
+}: {
+  label: string;
+  onClick: () => void;
+  children: ReactNode;
+  tone?: "default" | "danger";
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      onClick={onClick}
+      className={`grid h-7 w-9 place-items-center rounded-full border text-sm transition-colors ${
+        tone === "danger"
+          ? "border-[#ffb4ab]/20 text-[#ffb4ab] hover:bg-[#ffb4ab]/15"
+          : "border-white/10 text-[#9f9788] hover:bg-white/10 hover:text-[#ede6d5]"
+      }`}
+    >
+      {children}
+    </button>
   );
 }
 
