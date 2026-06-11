@@ -43,6 +43,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "agentation": "^3.0.2",
     "axios": "^1.8.4",
     "eslint": "^9",
     "eslint-config-next": "15.2.3",

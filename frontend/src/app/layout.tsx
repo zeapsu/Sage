@@ -1,4 +1,5 @@
 import "./globals.css";
+import AgentationDev from "@/components/AgentationDev";
 
 export const metadata = {
   title: "Sage",
@@ -20,6 +21,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className="min-h-screen w-full overflow-x-hidden bg-transparent font-body text-on-surface antialiased">
         {children}
+        <AgentationDev />
       </body>
     </html>
   );
